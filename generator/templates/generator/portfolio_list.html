@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}My Portfolios - Portfolio Generator{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>My Portfolios</h2>
+                <a href="{% url 'generator:portfolio_templates' %}" class="btn btn-primary">Create New Portfolio</a>
+            </div>
+            
+            {% if portfolios %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Template</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for portfolio in portfolios %}
+                                <tr>
+                                    <td>{{ portfolio.title }}</td>
+                                    <td>{{ portfolio.template.name }}</td>
+                                    <td>
+                                        {% if portfolio.is_published %}
+                                            <span class="badge bg-success">Published</span>
+                                        {% else %}
+                                            <span class="badge bg-warning">Draft</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ portfolio.created_at|date:"F j, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'generator:view_portfolio' portfolio.id %}" class="btn btn-sm btn-info">View</a>
+                                        {% if not portfolio.is_published %}
+                                            <a href="#" class="btn btn-sm btn-success">Publish</a>
+                                        {% endif %}
+                                        <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    You haven't created any portfolios yet. <a href="{% url 'generator:portfolio_templates' %}">Create your first portfolio</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

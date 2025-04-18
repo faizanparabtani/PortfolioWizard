@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Portfolio Templates{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>Manage Portfolio Templates</h2>
+    
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Add New Template</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">Add Template</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4>Existing Templates</h4>
+                </div>
+                <div class="card-body">
+                    {% if templates %}
+                        <div class="list-group">
+                            {% for template in templates %}
+                                <div class="list-group-item">
+                                    <h5 class="mb-1">{{ template.name }}</h5>
+                                    <p class="mb-1">{{ template.description }}</p>
+                                    <small>Created: {{ template.created_at|date:"F j, Y" }}</small>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p>No templates available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

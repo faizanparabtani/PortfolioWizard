@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Portfolio Templates - Portfolio Generator{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <h2 class="mb-4">Available Portfolio Templates</h2>
+            
+            {% if templates %}
+                <div class="row">
+                    {% for template in templates %}
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                <img src="{{ template.thumbnail.url }}" class="card-img-top" alt="{{ template.name }}">
+                                <div class="card-body">
+                                    <h5 class="card-title">{{ template.name }}</h5>
+                                    <p class="card-text">{{ template.description }}</p>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'generator:resume_list' %}" class="btn btn-primary">Select Resume</a>
+                                        <a href="#" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#previewModal{{ template.id }}">
+                                            Preview
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preview Modal -->
+                        <div class="modal fade" id="previewModal{{ template.id }}" tabindex="-1">
+                            <div class="modal-dialog modal-lg">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title">{{ template.name }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <img src="{{ template.thumbnail.url }}" class="img-fluid" alt="{{ template.name }}">
+                                        <p class="mt-3">{{ template.description }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No portfolio templates available at the moment.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Your Resumes</h2>
+                <a href="{% url 'generator:upload_resume' %}" class="btn btn-primary">Upload New Resume</a>
+            </div>
+            
+            {% if resumes %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Upload Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for resume in resumes %}
+                                <tr>
+                                    <td>{{ resume.name }}</td>
+                                    <td>{{ resume.uploaded_at|date:"F j, Y" }}</td>
+                                    <td>
+                                        <a href="{{ resume.file.url }}" class="btn btn-sm btn-info" target="_blank">View</a>
+                                        <a href="{% url 'generator:delete_resume' resume.id %}" class="btn btn-sm btn-danger">Delete</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    You haven't uploaded any resumes yet. <a href="{% url 'generator:upload_resume' %}">Upload your first resume</a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
