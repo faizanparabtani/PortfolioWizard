@@ -12,7 +12,7 @@ def register(request):
             user = form.save()
             login(request, user)
             messages.success(request, 'Account created successfully!')
-            return redirect('generator:resume_list')
+            return redirect('generator:dashboard')
     else:
         form = UserRegisterForm()
     return render(request, 'users/register.html', {'form': form})
@@ -27,7 +27,7 @@ def user_login(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, 'Logged in successfully!')
-                return redirect('generator:resume_list')
+                return redirect('generator:dashboard')
     else:
         form = UserLoginForm()
     return render(request, 'users/login.html', {'form': form})

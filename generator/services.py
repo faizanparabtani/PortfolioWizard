@@ -1,8 +1,12 @@
 import os
 import json
 import PyPDF2
+import requests
+import logging
 from django.conf import settings
 from .models import Resume, GeneratedPortfolio
+
+logger = logging.getLogger(__name__)
 
 class ResumeParser:
     def __init__(self, resume_file):
@@ -22,46 +26,144 @@ class ResumeParser:
 class ContentGenerator:
     def __init__(self, resume_text):
         self.resume_text = resume_text
+        self.api_key = settings.HUGGINGFACE_API_KEY
+        if not self.api_key:
+            raise ValueError("Hugging Face API key is required")
+        
+        self.api_url = "https://api-inference.huggingface.co/models/"
+        self.headers = {"Authorization": f"Bearer {self.api_key}"}
+        
+        # Default models for different tasks
+        self.models = {
+            'text_generation': "gpt2",
+            'summarization': "facebook/bart-large-cnn",
+            'classification': "distilbert-base-uncased"
+        }
+
+    def _make_api_call(self, model: str, payload: dict) -> dict:
+        """Make an API call to Hugging Face."""
+        try:
+            api_url = f"{self.api_url}{model}"
+            logger.info(f"Making API call to {model}")
+            response = requests.post(api_url, headers=self.headers, json=payload)
+            response.raise_for_status()  # Raise exception for bad status codes
+            result = response.json()
+            logger.info(f"API call successful: {result}")
+            return result
+        except requests.exceptions.RequestException as e:
+            logger.error(f"API call failed: {str(e)}")
+            raise
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse API response: {str(e)}")
+            raise
 
     def generate_content(self):
-        """Generate portfolio content using AI"""
-        # This is a placeholder for AI content generation
-        # You would integrate with an AI service here (e.g., OpenAI, Anthropic, etc.)
-        content = {
-            "about": {
-                "title": "Professional Summary",
-                "content": self._generate_about()
-            },
-            "experience": {
-                "title": "Work Experience",
-                "content": self._generate_experience()
-            },
-            "skills": {
-                "title": "Skills & Expertise",
-                "content": self._generate_skills()
-            },
-            "projects": {
-                "title": "Projects",
-                "content": self._generate_projects()
+        """Generate portfolio content using Hugging Face AI"""
+        try:
+            logger.info("Starting content generation")
+            logger.debug(f"Resume text length: {len(self.resume_text)}")
+            
+            sections = self._split_resume_into_sections()
+            logger.info("Resume split into sections")
+            
+            content = {
+                "about": {
+                    "title": "Professional Summary",
+                    "content": self._generate_about(sections.get('about', ''))
+                },
+                "experience": {
+                    "title": "Work Experience",
+                    "content": self._generate_experience(sections.get('experience', ''))
+                },
+                "skills": {
+                    "title": "Skills & Expertise",
+                    "content": self._generate_skills(sections.get('skills', ''))
+                },
+                "projects": {
+                    "title": "Projects",
+                    "content": self._generate_projects(sections.get('projects', ''))
+                }
+            }
+            
+            logger.info("Content generation completed successfully")
+            return content
+        except Exception as e:
+            logger.error(f"Content generation failed: {str(e)}")
+            raise
+
+    def _split_resume_into_sections(self) -> dict:
+        """Split resume text into relevant sections."""
+        # Simple split based on length - you might want to implement
+        # more sophisticated parsing based on your resume format
+        text_length = len(self.resume_text)
+        section_size = text_length // 4
+        
+        return {
+            'about': self.resume_text[:section_size],
+            'experience': self.resume_text[section_size:section_size*2],
+            'skills': self.resume_text[section_size*2:section_size*3],
+            'projects': self.resume_text[section_size*3:]
+        }
+
+    def _generate_about(self, text):
+        payload = {
+            "inputs": text,
+            "parameters": {
+                "max_length": 150,
+                "min_length": 50,
+                "do_sample": True
             }
         }
-        return content
+        result = self._make_api_call(self.models['summarization'], payload)
+        return result[0]['summary_text'] if isinstance(result, list) else result['summary_text']
 
-    def _generate_about(self):
-        # Placeholder for AI-generated about section
-        return "A brief professional summary based on your resume."
+    def _generate_experience(self, text):
+        payload = {
+            "inputs": text,
+            "parameters": {
+                "max_length": 200,
+                "min_length": 50,
+                "do_sample": True
+            }
+        }
+        result = self._make_api_call(self.models['text_generation'], payload)
+        return result[0]['generated_text'] if isinstance(result, list) else result['generated_text']
 
-    def _generate_experience(self):
-        # Placeholder for AI-generated experience section
-        return "Detailed work experience based on your resume."
+    def _generate_skills(self, text):
+        # First, extract skills
+        skills = [skill.strip() for skill in text.split(',') if skill.strip()]
+        
+        # Then categorize them
+        payload = {
+            "inputs": text,
+            "parameters": {
+                "candidates": ["Frontend", "Backend", "DevOps", "Database", "Other"]
+            }
+        }
+        categories = self._make_api_call(self.models['classification'], payload)
+        
+        # Format skills with categories
+        categorized_skills = []
+        for skill in skills:
+            categorized_skills.append({
+                'name': skill,
+                'category': categories[0]['label'],
+                'level': min(int(float(categories[0]['score']) * 100), 100)
+            })
+        
+        return json.dumps(categorized_skills)
 
-    def _generate_skills(self):
-        # Placeholder for AI-generated skills section
-        return "List of skills and expertise based on your resume."
-
-    def _generate_projects(self):
-        # Placeholder for AI-generated projects section
-        return "Highlighted projects based on your resume."
+    def _generate_projects(self, text):
+        payload = {
+            "inputs": text,
+            "parameters": {
+                "max_length": 150,
+                "min_length": 50,
+                "do_sample": True
+            }
+        }
+        result = self._make_api_call(self.models['text_generation'], payload)
+        return result[0]['generated_text'] if isinstance(result, list) else result['generated_text']
 
 class PortfolioGenerator:
     def __init__(self, user, template, resume):

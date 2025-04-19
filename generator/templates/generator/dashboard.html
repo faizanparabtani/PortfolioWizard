@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Sidebar Navigation -->
+        <div class="col-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Portfolio Management</h5>
+                </div>
+                <div class="list-group list-group-flush">
+                    <a href="{% url 'generator:upload_resume' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-upload me-2"></i>Upload Resume
+                    </a>
+                    <a href="{% url 'generator:portfolio_templates' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-paint-brush me-2"></i>Portfolio Templates
+                    </a>
+                    <a href="{% url 'generator:portfolio_list' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-folder me-2"></i>My Portfolios
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="{% url 'generator:manage_templates' %}" class="list-group-item list-group-item-action">
+                        <i class="fas fa-cog me-2"></i>Manage Templates
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="col-md-9">
+            <!-- Welcome Card -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Welcome to Your Portfolio Dashboard</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Quick Actions</h5>
+                                    <a href="{% url 'generator:upload_resume' %}" class="btn btn-primary mb-2">
+                                        <i class="fas fa-upload me-2"></i>Upload Resume
+                                    </a>
+                                    <a href="{% url 'generator:portfolio_templates' %}" class="btn btn-success mb-2">
+                                        <i class="fas fa-magic me-2"></i>Generate Portfolio
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Recent Activity</h5>
+                                    {% if recent_portfolios %}
+                                        <div class="list-group">
+                                            {% for portfolio in recent_portfolios %}
+                                                <a href="{% url 'generator:view_portfolio' portfolio.id %}" class="list-group-item list-group-item-action">
+                                                    <div class="d-flex w-100 justify-content-between">
+                                                        <h6 class="mb-1">{{ portfolio.title }}</h6>
+                                                        <small>{{ portfolio.created_at|timesince }} ago</small>
+                                                    </div>
+                                                    <small>Template: {{ portfolio.template.name }}</small>
+                                                </a>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted">No recent activity</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumes Section -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">My Resumes</h5>
+                    <a href="{% url 'generator:upload_resume' %}" class="btn btn-sm btn-primary">
+                        <i class="fas fa-plus me-2"></i>Upload New
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if resumes %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Upload Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for resume in resumes %}
+                                        <tr>
+                                            <td>{{ resume.name }}</td>
+                                            <td>{{ resume.uploaded_at|date:"F j, Y" }}</td>
+                                            <td>
+                                                <a href="{% url 'generator:portfolio_templates' %}" class="btn btn-sm btn-success">
+                                                    <i class="fas fa-magic me-1"></i>Generate Portfolio
+                                                </a>
+                                                <a href="{% url 'generator:delete_resume' resume.id %}" class="btn btn-sm btn-danger">
+                                                    <i class="fas fa-trash me-1"></i>Delete
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No resumes uploaded yet.</p>
+                            <a href="{% url 'generator:upload_resume' %}" class="btn btn-primary">
+                                <i class="fas fa-upload me-2"></i>Upload Your First Resume
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 
