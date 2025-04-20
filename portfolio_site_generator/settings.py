@@ -1,9 +1,16 @@
 from pathlib import Path
 import os
+from dotenv import load_dotenv
+import logging
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Set up logging
+logger = logging.getLogger(__name__)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-b!i)c-y4_$2hb70-fx9d$1q-hmq**3q873l0+4nlu*k#s$lrj!'
@@ -43,7 +50,7 @@ ROOT_URLCONF = 'portfolio_site_generator.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -69,6 +76,25 @@ DATABASES = {
     }
 }
 
+# Static files configuration
+STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Security settings for production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_HSTS_SECONDS = 31536000  # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
@@ -101,14 +127,6 @@ USE_I18N = True
 USE_TZ = True
 
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-
-# Media files
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Login/Logout URLs
@@ -116,13 +134,57 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'generator:dashboard'
 LOGOUT_REDIRECT_URL = 'users:login'
 
-# Hugging Face settings
-HUGGINGFACE_API_KEY = os.getenv('HUGGINGFACE_API_KEY', '')
-HUGGINGFACE_API_URL = "https://api-inference.huggingface.co/models/"
+# OpenAI API Settings
+OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+if not OPENAI_API_KEY:
+    print("Warning: OPENAI_API_KEY environment variable is not set!")
+    print("Current environment variables:", os.environ.get('OPENAI_API_KEY'))
+    print("Make sure you have a .env file in your project root with OPENAI_API_KEY=your_key_here")
+OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
+OPENAI_MODEL = "gpt-3.5-turbo"  # Free tier model
 
-# Model settings for different tasks
-HUGGINGFACE_MODELS = {
-    'text_generation': 'gpt2',
-    'summarization': 'facebook/bart-large-cnn',
-    'classification': 'distilbert-base-uncased'
+# Netlify Settings
+NETLIFY_TOKEN = os.getenv('NETLIFY_TOKEN')
+if not NETLIFY_TOKEN:
+    logger.warning("NETLIFY_TOKEN is not set. Deployment to Netlify will not work.")
+
+# Set up logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'simple',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['console', 'file'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'generator': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
 }

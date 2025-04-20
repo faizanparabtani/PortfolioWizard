@@ -39,4 +39,5 @@ class GeneratedPortfolio(models.Model):
         return f"{self.user.username}'s portfolio - {self.title}"
 
     def get_portfolio_url(self):
-        return f"/portfolios/{self.id}/"
+        """Return the URL to view the generated portfolio"""
+        return f"/generator/portfolios/{self.id}/view/"

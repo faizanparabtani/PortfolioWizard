@@ -2,9 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
+from django.http import HttpResponse
 from .models import Resume, PortfolioTemplate, GeneratedPortfolio
 from .forms import ResumeUploadForm, PortfolioTemplateForm
-from .services import PortfolioGenerator
+from .services import PortfolioGenerator, ContentGenerator, NetlifyDeployer
+import os
+from django.conf import settings
 
 
 @login_required
@@ -115,3 +118,64 @@ def manage_templates(request):
         'form': form,
         'templates': templates
     })
+
+@login_required
+def serve_portfolio(request, portfolio_id):
+    portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
+    
+    # Construct the path to the index.html file
+    portfolio_path = os.path.join(settings.MEDIA_ROOT, 'portfolios', f"{request.user.username}_{portfolio.template.name}")
+    index_path = os.path.join(portfolio_path, 'index.html')
+    
+    try:
+        # Read the index.html file
+        with open(index_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+            
+        # Update relative paths to use the correct media URL
+        content = content.replace('href="css/', f'href="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/css/')
+        content = content.replace('src="js/', f'src="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/js/')
+        content = content.replace('src="images/', f'src="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/images/')
+        
+        # Serve the content with appropriate content type
+        return HttpResponse(content, content_type='text/html')
+    except FileNotFoundError:
+        return HttpResponse("Portfolio site not found. Please try generating the portfolio again.", status=404)
+    except Exception as e:
+        return HttpResponse(f"Error serving portfolio: {str(e)}", status=500)
+
+@login_required
+def delete_portfolio(request, portfolio_id):
+    portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            # Delete the portfolio folder
+            portfolio_path = os.path.join('media', 'portfolios', f"{request.user.username}_{portfolio.template.name}")
+            if os.path.exists(portfolio_path):
+                import shutil
+                shutil.rmtree(portfolio_path)
+            
+            # Delete the database record
+            portfolio.delete()
+            messages.success(request, 'Portfolio deleted successfully!')
+            return redirect('generator:portfolio_list')
+        except Exception as e:
+            messages.error(request, f'Error deleting portfolio: {str(e)}')
+            return redirect('generator:portfolio_list')
+    
+    return render(request, 'generator/confirm_delete_portfolio.html', {'portfolio': portfolio})
+
+@login_required
+def deploy_portfolio(request, portfolio_id):
+    portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
+    
+    if request.method == 'POST':
+        try:
+            deployer = NetlifyDeployer(portfolio)
+            site_url = deployer.deploy()
+            messages.success(request, f'Portfolio successfully deployed to {site_url}')
+        except Exception as e:
+            messages.error(request, f'Failed to deploy portfolio: {str(e)}')
+    
+    return redirect('generator:view_portfolio', portfolio_id=portfolio.id)

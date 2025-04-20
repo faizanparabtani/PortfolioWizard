@@ -37,17 +37,44 @@
                                     </td>
                                     <td>{{ portfolio.created_at|date:"F j, Y" }}</td>
                                     <td>
-                                        <a href="{% url 'generator:view_portfolio' portfolio.id %}" class="btn btn-sm btn-info">View</a>
+                                        <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-sm btn-info">View</a>
                                         {% if not portfolio.is_published %}
                                             <a href="#" class="btn btn-sm btn-success">Publish</a>
                                         {% endif %}
-                                        <a href="#" class="btn btn-sm btn-danger">Delete</a>
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">
+                                            Delete
+                                        </button>
                                     </td>
                                 </tr>
                             {% endfor %}
                         </tbody>
                     </table>
                 </div>
+
+                <!-- Delete Confirmation Modals -->
+                {% for portfolio in portfolios %}
+                <div class="modal fade" id="deleteModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ portfolio.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel{{ portfolio.id }}">Confirm Deletion</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete the portfolio "{{ portfolio.title }}"?</p>
+                                <p class="text-danger">This action cannot be undone.</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form method="post" action="{% url 'generator:delete_portfolio' portfolio.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Delete Portfolio</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
             {% else %}
                 <div class="alert alert-info">
                     You haven't created any portfolios yet. <a href="{% url 'generator:portfolio_templates' %}">Create your first portfolio</a>
