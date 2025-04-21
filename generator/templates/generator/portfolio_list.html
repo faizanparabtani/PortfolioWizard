@@ -35,6 +35,30 @@
                                 <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-sm btn-success">
                                     <i class="fas fa-rocket"></i> Deploy
                                 </a>
+                                <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">
+                                    <i class="fas fa-trash-alt"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Delete Confirmation Modal for Portfolio {{ portfolio.id }} -->
+                <div class="modal fade" id="deleteModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ portfolio.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="deleteModalLabel{{ portfolio.id }}">Confirm Delete</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <p>Are you sure you want to delete the portfolio "{{ portfolio.title }}"?</p>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <form method="post" action="{% url 'generator:delete_portfolio' portfolio.id %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger">Delete</button>
+                                </form>
                             </div>
                         </div>
                     </div>

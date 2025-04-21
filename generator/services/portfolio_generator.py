@@ -8,10 +8,11 @@ from ..models import GeneratedPortfolio
 logger = logging.getLogger(__name__)
 
 class PortfolioGenerator:
-    def __init__(self, user, template, resume):
+    def __init__(self, user, template, resume, portfolio=None):
         self.user = user
         self.template = template
         self.resume = resume
+        self.portfolio = portfolio
 
     def generate_portfolio(self):
         """Generate a personalized portfolio"""
@@ -24,21 +25,28 @@ class PortfolioGenerator:
             content_generator = ContentGenerator(resume_text, self.user, self.template)
             generated_content = content_generator.generate_content()
 
-            # Create portfolio instance
-            portfolio = GeneratedPortfolio.objects.create(
-                user=self.user,
-                template=self.template,
-                resume=self.resume,
-                title=f"{self.user.username}'s Portfolio",
-                description="Generated portfolio based on resume",
-                generated_content=generated_content,
-                portfolio_folder=f"portfolios/{self.user.username}_{self.template.name}/"
-            )
+            # Update the portfolio with generated content
+            if self.portfolio:
+                self.portfolio.generated_content = generated_content
+                self.portfolio.title = f"{self.user.username}'s Portfolio"
+                self.portfolio.description = "Generated portfolio based on resume"
+                self.portfolio.save()
+            else:
+                # Create new portfolio if none provided
+                self.portfolio = GeneratedPortfolio.objects.create(
+                    user=self.user,
+                    template=self.template,
+                    resume=self.resume,
+                    title=f"{self.user.username}'s Portfolio",
+                    description="Generated portfolio based on resume",
+                    generated_content=generated_content,
+                    portfolio_folder=f"portfolios/{self.user.username}_{self.template.name}/"
+                )
 
             # Generate portfolio files
-            self._generate_portfolio_files(portfolio, generated_content)
+            self._generate_portfolio_files(self.portfolio, generated_content)
 
-            return portfolio
+            return self.portfolio
         except Exception as e:
             logger.error(f"Portfolio generation failed: {str(e)}")
             raise

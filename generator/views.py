@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from .models import Resume, PortfolioTemplate, GeneratedPortfolio
 from .forms import ResumeUploadForm, PortfolioTemplateForm
 from .services.resume_parser import ResumeParser
@@ -12,7 +12,11 @@ from .services.netlify_deployer import NetlifyDeployer
 import os
 from django.conf import settings
 from datetime import datetime
+import threading
+import time
 
+# Store generation status
+generation_status = {}
 
 @login_required
 def dashboard(request):
@@ -95,14 +99,72 @@ def generate_portfolio(request, template_id):
     
     resume = get_object_or_404(Resume, id=resume_id, user=request.user)
     
-    try:
-        generator = PortfolioGenerator(request.user, template, resume)
-        portfolio = generator.generate_portfolio()
-        messages.success(request, 'Portfolio generated successfully!')
-        return redirect('generator:view_portfolio', portfolio_id=portfolio.id)
-    except Exception as e:
-        messages.error(request, f'Error generating portfolio: {str(e)}')
-        return redirect('generator:portfolio_templates')
+    # Create a temporary portfolio instance
+    portfolio = GeneratedPortfolio.objects.create(
+        user=request.user,
+        template=template,
+        resume=resume,
+        title=f"{request.user.username}'s Portfolio",
+        description="Portfolio generation in progress...",
+        generated_content={},
+        portfolio_folder=f"portfolios/{request.user.username}_{template.name}/"
+    )
+    
+    # Start generation in a separate thread
+    generation_status[portfolio.id] = {
+        'status': 'processing',
+        'message': 'Starting portfolio generation...'
+    }
+    
+    def generate_portfolio_async():
+        try:
+            generator = PortfolioGenerator(request.user, template, resume, portfolio)
+            generated_portfolio = generator.generate_portfolio()
+            
+            # Update generation status
+            generation_status[portfolio.id] = {
+                'status': 'completed',
+                'message': 'Portfolio generated successfully!'
+            }
+        except Exception as e:
+            # Update status before deleting
+            generation_status[portfolio.id] = {
+                'status': 'error',
+                'message': str(e)
+            }
+            # Clean up the temporary portfolio
+            portfolio.delete()
+    
+    # Start the generation process in a separate thread
+    thread = threading.Thread(target=generate_portfolio_async)
+    thread.daemon = True  # Make thread daemon so it doesn't prevent program exit
+    thread.start()
+    
+    # Redirect to loading page with portfolio_id
+    return render(request, 'generator/loading.html', {'portfolio_id': portfolio.id})
+
+@login_required
+def check_generation_status(request, portfolio_id):
+    # First check the generation_status dictionary
+    status = generation_status.get(portfolio_id)
+    
+    if status is None:
+        # If not in generation_status, check if portfolio exists
+        try:
+            portfolio = GeneratedPortfolio.objects.get(id=portfolio_id, user=request.user)
+            # If it exists but not in generation_status, it's completed
+            return JsonResponse({
+                'status': 'completed',
+                'message': 'Portfolio generated successfully!'
+            })
+        except GeneratedPortfolio.DoesNotExist:
+            return JsonResponse({
+                'status': 'not_found',
+                'message': 'Portfolio not found'
+            })
+    
+    # If we have a status, return it
+    return JsonResponse(status)
 
 # Portfolio View
 @login_required
@@ -231,7 +293,8 @@ def delete_portfolio(request, portfolio_id):
             messages.error(request, f'Error deleting portfolio: {str(e)}')
             return redirect('generator:portfolio_list')
     
-    return render(request, 'generator/confirm_delete_portfolio.html', {'portfolio': portfolio})
+    # For GET requests, redirect back to the portfolio list
+    return redirect('generator:portfolio_list')
 
 @login_required
 def deploy_portfolio(request, portfolio_id):
