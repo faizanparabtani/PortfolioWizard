@@ -5,7 +5,10 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from .models import Resume, PortfolioTemplate, GeneratedPortfolio
 from .forms import ResumeUploadForm, PortfolioTemplateForm
-from .services import PortfolioGenerator, ContentGenerator, NetlifyDeployer
+from .services.resume_parser import ResumeParser
+from .services.content_generator import ContentGenerator
+from .services.portfolio_generator import PortfolioGenerator
+from .services.netlify_deployer import NetlifyDeployer
 import os
 from django.conf import settings
 from datetime import datetime
@@ -192,8 +195,10 @@ def serve_portfolio(request, portfolio_id):
                 'url': '#'  # Default URL
             })
     
-    # Return the generated HTML content directly
-    return HttpResponse(content['html_content'], content_type='text/html')
+    # Return the generated HTML content with proper headers
+    response = HttpResponse(content['html_content'], content_type='text/html')
+    response['X-Frame-Options'] = 'SAMEORIGIN'  # Allow iframe from same origin
+    return response
 
 @login_required
 def delete_portfolio(request, portfolio_id):

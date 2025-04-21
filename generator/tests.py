@@ -1,5 +1,5 @@
 from django.test import TestCase
-from .services import ContentGenerator
+from .services.content_generator import ContentGenerator
 from django.conf import settings
 import logging
 import google.generativeai as genai

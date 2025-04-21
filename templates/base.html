@@ -6,6 +6,8 @@
     <title>{% block title %}Portfolio Generator{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <!-- Custom CSS -->
     <style>
         body {
@@ -24,6 +26,15 @@
         .logout-form {
             display: inline;
         }
+        .back-button {
+            margin-right: 1rem;
+        }
+        .nav-link i {
+            margin-right: 0.5rem;
+        }
+        .navbar-brand i {
+            margin-right: 0.5rem;
+        }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
@@ -31,7 +42,9 @@
     <!-- Navigation -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'generator:dashboard' %}">Portfolio Generator</a>
+            <a class="navbar-brand" href="{% url 'generator:dashboard' %}">
+                <i class="fas fa-paint-brush"></i>Portfolio Generator
+            </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
@@ -39,23 +52,33 @@
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'generator:dashboard' %}">My Resumes</a>
+                            <a class="nav-link" href="{% url 'generator:dashboard' %}">
+                                <i class="fas fa-home"></i>Dashboard
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'generator:upload_resume' %}">Upload Resume</a>
+                            <a class="nav-link" href="{% url 'generator:upload_resume' %}">
+                                <i class="fas fa-upload"></i>Upload Resume
+                            </a>
                         </li>
                         <li class="nav-item">
                             <form class="logout-form" method="post" action="{% url 'logout' %}">
                                 {% csrf_token %}
-                                <button type="submit" class="nav-link btn btn-link" style="color: rgba(255,255,255,.55);">Logout</button>
+                                <button type="submit" class="nav-link btn btn-link" style="color: rgba(255,255,255,.55);">
+                                    <i class="fas fa-sign-out-alt"></i>Logout
+                                </button>
                             </form>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'users:login' %}">Login</a>
+                            <a class="nav-link" href="{% url 'users:login' %}">
+                                <i class="fas fa-sign-in-alt"></i>Login
+                            </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'users:register' %}">Register</a>
+                            <a class="nav-link" href="{% url 'users:register' %}">
+                                <i class="fas fa-user-plus"></i>Register
+                            </a>
                         </li>
                     {% endif %}
                 </ul>

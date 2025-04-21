@@ -39,7 +39,9 @@
                                     <td>
                                         <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-sm btn-info">View</a>
                                         {% if not portfolio.is_published %}
-                                            <a href="#" class="btn btn-sm btn-success">Publish</a>
+                                            <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-sm btn-success">
+                                                <i class="fas fa-rocket"></i> Deploy to Netlify
+                                            </a>
                                         {% endif %}
                                         <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">
                                             Delete
