@@ -64,9 +64,20 @@ def delete_resume(request, resume_id):
 def portfolio_templates(request):
     templates = PortfolioTemplate.objects.filter(is_active=True)
     resumes = Resume.objects.filter(user=request.user).order_by('-uploaded_at')
+    
+    # Get the selected resume ID from the query parameter
+    selected_resume_id = request.GET.get('resume_id')
+    selected_resume = None
+    if selected_resume_id:
+        try:
+            selected_resume = Resume.objects.get(id=selected_resume_id, user=request.user)
+        except Resume.DoesNotExist:
+            pass
+    
     return render(request, 'generator/portfolio_templates.html', {
         'templates': templates,
-        'resumes': resumes
+        'resumes': resumes,
+        'selected_resume': selected_resume
     })
 
 # Portfolio Generation

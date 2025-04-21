@@ -1,49 +1,69 @@
 {% extends 'base.html' %}
 
-{% block title %}Manage Portfolio Templates{% endblock %}
+{% block title %}Manage Templates - Portfolio Generator{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
-    <h2>Manage Portfolio Templates</h2>
-    
-    <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Add New Template</h4>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-cog"></i> Manage Templates</h1>
+        <a href="{% url 'generator:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save me-2"></i>Save Template
+                    </button>
                 </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary">Add Template</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-header">
-                    <h4>Existing Templates</h4>
-                </div>
-                <div class="card-body">
-                    {% if templates %}
-                        <div class="list-group">
-                            {% for template in templates %}
-                                <div class="list-group-item">
-                                    <h5 class="mb-1">{{ template.name }}</h5>
-                                    <p class="mb-1">{{ template.description }}</p>
-                                    <small>Created: {{ template.created_at|date:"F j, Y" }}</small>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p>No templates available.</p>
-                    {% endif %}
-                </div>
-            </div>
+            </form>
         </div>
     </div>
+
+    {% if templates %}
+        <div class="mt-4">
+            <h2>Existing Templates</h2>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for template in templates %}
+                            <tr>
+                                <td>{{ template.name }}</td>
+                                <td>{{ template.description }}</td>
+                                <td>
+                                    {% if template.is_active %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Inactive</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="#" class="btn btn-sm btn-primary">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="#" class="btn btn-sm btn-danger">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% endif %}
 </div>
 {% endblock %} 

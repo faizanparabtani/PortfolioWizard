@@ -51,11 +51,13 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     {% if user.is_authenticated %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'generator:dashboard' %}">
-                                <i class="fas fa-home"></i>Dashboard
-                            </a>
-                        </li>
+                        {% if not request.resolver_match.url_name == 'dashboard' %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'generator:dashboard' %}">
+                                    <i class="fas fa-home"></i>Dashboard
+                                </a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'generator:upload_resume' %}">
                                 <i class="fas fa-upload"></i>Upload Resume

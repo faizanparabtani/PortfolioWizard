@@ -3,86 +3,48 @@
 {% block title %}My Portfolios - Portfolio Generator{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center mb-4">
-                <h2>My Portfolios</h2>
-                <a href="{% url 'generator:portfolio_templates' %}" class="btn btn-primary">Create New Portfolio</a>
-            </div>
-            
-            {% if portfolios %}
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Template</th>
-                                <th>Status</th>
-                                <th>Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for portfolio in portfolios %}
-                                <tr>
-                                    <td>{{ portfolio.title }}</td>
-                                    <td>{{ portfolio.template.name }}</td>
-                                    <td>
-                                        {% if portfolio.is_published %}
-                                            <span class="badge bg-success">Published</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Draft</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ portfolio.created_at|date:"F j, Y" }}</td>
-                                    <td>
-                                        <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-sm btn-info">View</a>
-                                        {% if not portfolio.is_published %}
-                                            <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-sm btn-success">
-                                                <i class="fas fa-rocket"></i> Deploy to Netlify
-                                            </a>
-                                        {% endif %}
-                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ portfolio.id }}">
-                                            Delete
-                                        </button>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-folder-open"></i> My Portfolios</h1>
+        <a href="{% url 'generator:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
 
-                <!-- Delete Confirmation Modals -->
-                {% for portfolio in portfolios %}
-                <div class="modal fade" id="deleteModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ portfolio.id }}" aria-hidden="true">
-                    <div class="modal-dialog">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="deleteModalLabel{{ portfolio.id }}">Confirm Deletion</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body">
-                                <p>Are you sure you want to delete the portfolio "{{ portfolio.title }}"?</p>
-                                <p class="text-danger">This action cannot be undone.</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <form method="post" action="{% url 'generator:delete_portfolio' portfolio.id %}" style="display: inline;">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-danger">Delete Portfolio</button>
-                                </form>
+    {% if portfolios %}
+        <div class="row">
+            {% for portfolio in portfolios %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-file-alt"></i> {{ portfolio.title }}
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> Created: {{ portfolio.created_at|date:"F j, Y, g:i a" }}
+                                </small>
+                            </p>
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'generator:view_portfolio' portfolio.id %}" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                                <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                    <i class="fas fa-external-link-alt"></i> Open
+                                </a>
+                                <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-sm btn-success">
+                                    <i class="fas fa-rocket"></i> Deploy
+                                </a>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endfor %}
-            {% else %}
-                <div class="alert alert-info">
-                    You haven't created any portfolios yet. <a href="{% url 'generator:portfolio_templates' %}">Create your first portfolio</a>
-                </div>
-            {% endif %}
+            {% endfor %}
         </div>
-    </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No portfolios found. Upload a resume to generate your first portfolio.
+        </div>
+    {% endif %}
 </div>
 {% endblock %} 

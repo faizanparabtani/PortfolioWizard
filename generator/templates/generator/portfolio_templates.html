@@ -3,100 +3,100 @@
 {% block title %}Portfolio Templates - Portfolio Generator{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-12">
-            <h2 class="mb-4">Available Portfolio Templates</h2>
-            
-            {% if templates %}
-                <div class="row">
-                    {% for template in templates %}
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100">
-                                <img src="{{ template.thumbnail.url }}" class="card-img-top" alt="{{ template.name }}">
-                                <div class="card-body">
-                                    <h5 class="card-title">{{ template.name }}</h5>
-                                    <p class="card-text">{{ template.description }}</p>
-                                </div>
-                                <div class="card-footer">
-                                    <div class="d-flex justify-content-between">
-                                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#resumeModal{{ template.id }}">
-                                            Select Resume
-                                        </button>
-                                        <a href="#" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#previewModal{{ template.id }}">
-                                            Preview
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1><i class="fas fa-paint-brush"></i> Available Portfolio Templates</h1>
+        <a href="{% url 'generator:dashboard' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+    
+    {% if templates %}
+        <div class="row">
+            {% for template in templates %}
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100">
+                        <img src="{{ template.thumbnail.url }}" class="card-img-top" alt="{{ template.name }}">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ template.name }}</h5>
+                            <p class="card-text">{{ template.description }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#resumeModal{{ template.id }}">
+                                    Select Resume
+                                </button>
+                                <a href="#" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#previewModal{{ template.id }}">
+                                    Preview
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Preview Modal -->
+                <div class="modal fade" id="previewModal{{ template.id }}" tabindex="-1">
+                    <div class="modal-dialog modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">{{ template.name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <img src="{{ template.thumbnail.url }}" class="img-fluid" alt="{{ template.name }}">
+                                <p class="mt-3">{{ template.description }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resume Selection Modal -->
+                <div class="modal fade" id="resumeModal{{ template.id }}" tabindex="-1" aria-labelledby="resumeModalLabel{{ template.id }}" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="resumeModalLabel{{ template.id }}">Select Resume</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                {% if resumes %}
+                                    <form method="post" action="{% url 'generator:generate_portfolio' template.id %}">
+                                        {% csrf_token %}
+                                        <div class="list-group">
+                                            {% for resume in resumes %}
+                                                <label class="list-group-item">
+                                                    <input type="radio" name="resume_id" value="{{ resume.id }}" 
+                                                           class="form-check-input me-2" 
+                                                           {% if selected_resume and selected_resume.id == resume.id %}checked{% endif %}>
+                                                    {{ resume.name }}
+                                                    <small class="text-muted d-block">Uploaded: {{ resume.uploaded_at|date:"F j, Y" }}</small>
+                                                </label>
+                                            {% endfor %}
+                                        </div>
+                                        <div class="mt-4 text-end">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <button type="submit" class="btn btn-primary">Generate Portfolio</button>
+                                        </div>
+                                    </form>
+                                {% else %}
+                                    <div class="text-center py-4">
+                                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                        <p class="text-muted">No resumes uploaded yet.</p>
+                                        <a href="{% url 'generator:upload_resume' %}" class="btn btn-primary">
+                                            <i class="fas fa-upload me-2"></i>Upload Your First Resume
                                         </a>
                                     </div>
-                                </div>
+                                {% endif %}
                             </div>
                         </div>
-
-                        <!-- Preview Modal -->
-                        <div class="modal fade" id="previewModal{{ template.id }}" tabindex="-1">
-                            <div class="modal-dialog modal-lg">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">{{ template.name }}</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        <img src="{{ template.thumbnail.url }}" class="img-fluid" alt="{{ template.name }}">
-                                        <p class="mt-3">{{ template.description }}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Resume Selection Modal -->
-                        <div class="modal fade" id="resumeModal{{ template.id }}" tabindex="-1">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Select Resume</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        {% if resumes %}
-                                            <form action="{% url 'generator:generate_portfolio' template.id %}" method="post">
-                                                {% csrf_token %}
-                                                <div class="list-group">
-                                                    {% for resume in resumes %}
-                                                        <label class="list-group-item">
-                                                            <input class="form-check-input me-2" type="radio" name="resume_id" value="{{ resume.id }}" required>
-                                                            <div>
-                                                                <strong>{{ resume.name }}</strong>
-                                                                <br>
-                                                                <small class="text-muted">Uploaded: {{ resume.uploaded_at|date:"F j, Y" }}</small>
-                                                            </div>
-                                                        </label>
-                                                    {% endfor %}
-                                                </div>
-                                                <div class="mt-4 text-end">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <button type="submit" class="btn btn-primary">Generate Portfolio</button>
-                                                </div>
-                                            </form>
-                                        {% else %}
-                                            <div class="text-center py-4">
-                                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
-                                                <p class="text-muted">No resumes uploaded yet.</p>
-                                                <a href="{% url 'generator:upload_resume' %}" class="btn btn-primary">
-                                                    <i class="fas fa-upload me-2"></i>Upload Your First Resume
-                                                </a>
-                                            </div>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
+                    </div>
                 </div>
-            {% else %}
-                <div class="alert alert-info">
-                    No portfolio templates available at the moment.
-                </div>
-            {% endif %}
+            {% endfor %}
         </div>
-    </div>
+    {% else %}
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> No portfolio templates available at the moment.
+        </div>
+    {% endif %}
 </div>
 {% endblock %} 
