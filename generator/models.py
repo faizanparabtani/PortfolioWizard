@@ -27,16 +27,18 @@ class GeneratedPortfolio(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     template = models.ForeignKey(PortfolioTemplate, on_delete=models.CASCADE)
     resume = models.ForeignKey(Resume, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    description = models.TextField()
-    generated_content = models.JSONField()  # Store AI-generated content
-    portfolio_folder = models.CharField(max_length=255)  # Path to generated portfolio
-    is_published = models.BooleanField(default=False)
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    generated_content = models.JSONField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    is_published = models.BooleanField(default=False)
+    portfolio_folder = models.CharField(max_length=255)
+    netlify_site_id = models.CharField(max_length=100, blank=True, null=True)
+    netlify_deploy_id = models.CharField(max_length=100, blank=True, null=True)
+    netlify_url = models.URLField(max_length=200, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.username}'s portfolio - {self.title}"
+        return f"{self.user.username}'s {self.template.name} Portfolio"
 
     def get_portfolio_url(self):
         """Return the URL to view the generated portfolio"""

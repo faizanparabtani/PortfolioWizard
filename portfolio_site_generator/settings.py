@@ -134,14 +134,15 @@ LOGIN_URL = 'users:login'
 LOGIN_REDIRECT_URL = 'generator:dashboard'
 LOGOUT_REDIRECT_URL = 'users:login'
 
-# OpenAI API Settings
-OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-if not OPENAI_API_KEY:
-    print("Warning: OPENAI_API_KEY environment variable is not set!")
-    print("Current environment variables:", os.environ.get('OPENAI_API_KEY'))
-    print("Make sure you have a .env file in your project root with OPENAI_API_KEY=your_key_here")
-OPENAI_API_URL = "https://api.openai.com/v1/chat/completions"
-OPENAI_MODEL = "gpt-3.5-turbo"  # Free tier model
+# API Keys
+GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY environment variable is required")
+
+# Remove OpenAI settings
+# OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+# if not OPENAI_API_KEY:
+#     raise ValueError("OPENAI_API_KEY environment variable is required")
 
 # Netlify Settings
 NETLIFY_TOKEN = os.getenv('NETLIFY_TOKEN')

@@ -14,6 +14,10 @@ from typing import Optional
 import netlify
 import shutil
 import tempfile
+import io
+import zipfile
+import google.generativeai as genai
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -33,30 +37,42 @@ class ResumeParser:
         return text
 
 class ContentGenerator:
-    def __init__(self, resume_text):
+    def __init__(self, resume_text, user):
         self.resume_text = resume_text
-        self.api_key = settings.OPENAI_API_KEY
+        self.user = user
+        self.model = genai.GenerativeModel('gemini-1.5-pro')  # Using the latest stable model
+        self.logger = logging.getLogger(__name__)
+        self.api_key = settings.GEMINI_API_KEY
         if not self.api_key:
-            logger.error("OpenAI API key is missing")
-            raise ValueError("OpenAI API key is required")
+            logger.error("Gemini API key is missing")
+            raise ValueError("Gemini API key is required")
         
-        # Configure OpenAI client
-        openai.api_key = self.api_key
-        self.model = "gpt-3.5-turbo"
+        # Configure Gemini client
+        genai.configure(api_key=self.api_key)
         self.max_retries = 3
         self.initial_delay = 2
 
     def generate_content(self):
-        """Generate portfolio content using OpenAI API"""
+        """Generate portfolio content using Gemini API"""
         try:
-            logger.info("Starting content generation")
-            return self._attempt_generation()
+            logger.info("Starting content generation with Gemini")
+            
+            # Set generation config
+            generation_config = {
+                "temperature": 0.7,
+                "top_p": 0.8,
+                "top_k": 40,
+                "max_output_tokens": 1024,
+            }
+            
+            return self._attempt_generation(generation_config=generation_config)
+            
         except Exception as e:
             logger.error(f"Content generation failed: {str(e)}")
             return self._create_response(self._get_default_sections())
 
-    def _attempt_generation(self):
-        """Generate content with OpenAI API"""
+    def _attempt_generation(self, generation_config=None):
+        """Generate content with Gemini API"""
         try:
             # Create prompt
             prompt = self._get_simplified_prompt()
@@ -67,56 +83,30 @@ class ContentGenerator:
                 try:
                     logger.info(f"API Call Attempt {attempt + 1}/{self.max_retries}")
                     
-                    # Split the prompt if it's too long
-                    if len(prompt) > 4000:  # OpenAI's token limit is roughly 4000 tokens
-                        prompt = self._truncate_prompt(prompt)
-                    
-                    response = openai.ChatCompletion.create(
-                        model=self.model,
-                        messages=[
-                            {"role": "system", "content": "You are a helpful assistant who rewrites resume content for a personal portfolio website. The tone should be concise, human, and engaging."},
-                            {"role": "user", "content": prompt}
-                        ],
-                        temperature=0.7,
-                        max_tokens=2000,  # Increased from 1000
-                        top_p=0.9,
-                        frequency_penalty=0.5,
-                        presence_penalty=0.5
+                    # Generate content with configuration
+                    response = self.model.generate_content(
+                        prompt,
+                        generation_config=generation_config
                     )
                     
-                    logger.info("API call successful")
-                    
-                    # Parse the response
-                    if response and 'choices' in response and response['choices']:
-                        content = response['choices'][0]['message']['content']
+                    if response and response.text:
                         logger.info("Successfully received content from API")
-                        sections = self._parse_content(content)
+                        logger.info(f"Raw response: {response.text}")  # Log the raw response
+                        sections = self._parse_content(response.text)
+                        logger.info(f"Parsed sections: {sections}")  # Log the parsed sections
                         return self._create_response(sections)
+                    else:
+                        raise Exception("Empty response from Gemini API")
                     
-                except openai.error.RateLimitError as e:
-                    logger.warning(f"Rate limit exceeded: {str(e)}")
+                except Exception as e:
+                    logger.error(f"Error in generation attempt {attempt + 1}: {str(e)}")
                     if attempt < self.max_retries - 1:
                         delay = self._calculate_backoff(attempt)
                         logger.warning(f"Waiting {delay} seconds before retry...")
                         time.sleep(delay)
                         continue
                     else:
-                        logger.error("Rate limit exceeded after all retries")
                         raise
-                        
-                except openai.error.APIError as e:
-                    logger.error(f"OpenAI API error: {str(e)}")
-                    if attempt == self.max_retries - 1:
-                        raise
-                    delay = self._calculate_backoff(attempt)
-                    time.sleep(delay)
-                    
-                except Exception as e:
-                    logger.error(f"Unexpected error: {str(e)}")
-                    if attempt == self.max_retries - 1:
-                        raise
-                    delay = self._calculate_backoff(attempt)
-                    time.sleep(delay)
             
             raise Exception("All retry attempts failed")
             
@@ -124,34 +114,35 @@ class ContentGenerator:
             logger.error(f"Error in content generation: {str(e)}")
             raise
 
-    def _truncate_prompt(self, prompt):
-        """Truncate the prompt if it's too long"""
-        # Keep the instructions and truncate the resume text
-        instructions = prompt.split("Based on this resume text:")[0]
-        resume_text = prompt.split("Based on this resume text:")[1]
-        
-        # Truncate resume text to roughly 3000 characters
-        truncated_resume = resume_text[:3000] + "...\n\n[Content truncated for length]"
-        
-        return f"{instructions}Based on this resume text:\n{truncated_resume}"
-
     def _get_simplified_prompt(self):
         """Create a simplified prompt for content generation"""
-        return f"""Based on this resume text:
-                {self.resume_text}
+        return f"""Analyze this resume and create portfolio content:
 
-                Refine the content of the resume to be used in a personal portfolio website for the user,
-                the content should ensure that all the information is present and relevant to the user.
-                Some of the sections are optional and can be omitted if the user doesn't have any information for them,
-                but the user should have the following sections:
+            {self.resume_text}
 
-                1. Information about the user
-                2. About Me: A brief professional summary (2-3 sentences)
-                3. Experience: Highlight roles with key achievements (Main portion of the content)
-                4. Skills: List skills and expertise
-                5. Projects: Describe 2-3 significant projects
+            Format your response EXACTLY as follows (keep the section headers exactly as shown):
 
-                Keep each section concise and professional and suitable for a portfolio website."""
+            [ABOUT]
+            A software engineer with X years of experience specializing in... (write 2-3 sentences based on the resume, in first person)
+
+            [SKILLS]
+            * Python
+            * Django
+            (list actual skills from resume, one per line with asterisk)
+
+            [EXPERIENCE]
+            * **Senior Developer at Tech Corp (2020-Present)**
+            * Developed feature X that achieved Y
+            * Led project Z with outcome W
+            (list real experience with actual achievements)
+
+            [PROJECTS]
+            * **Project Name**
+            * Built using actual technologies
+            * Implemented real features
+            (describe actual projects from resume)
+
+            Note: Replace the example text with real information from the resume. Keep the exact formatting with asterisks and section headers."""
 
     def _parse_content(self, content: str) -> dict:
         """Parse the generated content into sections"""
@@ -162,31 +153,50 @@ class ContentGenerator:
             'projects': ''
         }
         
-        # Split content into sections
-        current_section = None
-        lines = content.split('\n')
+        # Split into sections using markers
+        parts = content.split('[')
         
-        for line in lines:
-            line = line.strip()
-            if not line:
+        for part in parts:
+            if not part.strip():
                 continue
                 
-            # Check for section headers
-            if 'About Me' in line or 'About:' in line:
-                current_section = 'about'
-            elif 'Skills' in line or 'Skills:' in line:
-                current_section = 'skills'
-            elif 'Experience' in line or 'Experience:' in line:
-                current_section = 'experience'
-            elif 'Projects' in line or 'Projects:' in line:
-                current_section = 'projects'
-            elif current_section:
-                if current_section == 'skills':
-                    # Extract skills from the line
-                    skills = [s.strip() for s in line.split(',') if s.strip()]
-                    sections['skills'].extend(skills)
-                else:
-                    sections[current_section] += line + '\n'
+            # Identify section
+            if part.startswith('ABOUT]'):
+                section_content = part[6:].strip()  # Remove header
+                sections['about'] = section_content
+                
+            elif part.startswith('SKILLS]'):
+                skills_text = part[7:].strip()  # Remove header
+                # Extract skills (lines starting with asterisk)
+                skills = [line.strip('* ').strip() for line in skills_text.split('\n') 
+                         if line.strip().startswith('*')]
+                sections['skills'] = [skill for skill in skills if skill]
+                
+            elif part.startswith('EXPERIENCE]'):
+                sections['experience'] = part[11:].strip()  # Remove header
+                
+            elif part.startswith('PROJECTS]'):
+                sections['projects'] = part[9:].strip()  # Remove header
+        
+        # Clean up sections
+        for key in ['experience', 'projects']:
+            if sections[key]:
+                # Remove any remaining instruction-like text
+                lines = sections[key].split('\n')
+                cleaned_lines = []
+                for line in lines:
+                    if line.strip() and not any(marker in line.lower() for marker in ['example:', 'note:', 'replace']):
+                        cleaned_lines.append(line)
+                sections[key] = '\n'.join(cleaned_lines)
+        
+        # Clean up about section
+        if sections['about']:
+            # Remove any instruction-like text
+            lines = sections['about'].split('\n')
+            cleaned_lines = [line for line in lines 
+                           if line.strip() and not any(marker in line.lower() 
+                           for marker in ['example:', 'note:', 'replace'])]
+            sections['about'] = ' '.join(cleaned_lines)
         
         return sections
 
@@ -211,62 +221,170 @@ class ContentGenerator:
         return {
             'html_content': html_content,
             'raw_content': sections,
-            'model_used': self.model
+            'model_used': 'gemini-1.5-pro'
         }
 
     def _create_html_template(self, sections):
         """Create the complete HTML template with all sections"""
-        return f"""
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Professional Portfolio</title>
-            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-        </head>
-        <body>
-            <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-                <div class="container">
-                    <a class="navbar-brand" href="#">My Portfolio</a>
-                </div>
-            </nav>
+        # Read the template file
+        template_path = os.path.join(settings.BASE_DIR, 'generator', 'templates', 'portfolios', 'creative_professional', 'index.html')
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template = f.read()
+        
+        # Replace placeholders with actual content
+        template = template.replace('{{ about.title }}', f"{self.user.get_full_name() or self.user.username}'s Portfolio")
+        template = template.replace('{{ about.subtitle }}', sections['about'])
+        template = template.replace('{{ about.description }}', sections['about'])
+        
+        # Replace social links section with empty string since we don't have social links
+        template = template.replace('{% for link in about.social_links %}\n                <a href="{{ link.url }}" class="text-white me-3"><i class="{{ link.icon }} fa-2x"></i></a>\n                {% endfor %}', '')
+        
+        # Replace skills
+        skills_html = ''.join([f'<span class="skill-badge">{skill}</span>' for skill in sections['skills']])
+        template = template.replace('{% for skill in skills %}\n                <span class="skill-badge">{{ skill.name }}</span>\n                {% endfor %}', skills_html)
+        
+        # Replace experience
+        experience_html = ''
+        if sections['experience']:
+            # Split the content into individual experiences
+            experience_entries = []
+            current_entry = []
             
-            <main class="container py-5">
-                <section id="about" class="mb-5">
-                    <h2 class="mb-4">About Me</h2>
-                    <div class="section-content">{sections['about']}</div>
-                </section>
-                
-                <section id="skills" class="mb-5">
-                    <h2 class="mb-4">Skills & Expertise</h2>
-                    <div class="row">
-                        {' '.join(f'<div class="col-md-4 mb-3"><div class="skill-item p-2 border rounded">{skill}</div></div>' for skill in sections['skills'])}
+            for line in sections['experience'].split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Check if this line starts a new experience (contains a date range in parentheses)
+                if '(' in line and ')' in line and '-' in line:
+                    if current_entry:
+                        experience_entries.append('\n'.join(current_entry))
+                        current_entry = []
+                current_entry.append(line)
+            
+            # Add the last entry if exists
+            if current_entry:
+                experience_entries.append('\n'.join(current_entry))
+            
+            for entry in experience_entries:
+                try:
+                    lines = [line.strip() for line in entry.split('\n') if line.strip()]
+                    if not lines:
+                        continue
+                    
+                    # First line contains position and dates
+                    header = lines[0].strip('* **').strip('**')
+                    
+                    # Try to extract dates if they exist
+                    position = header
+                    start_date = ""
+                    end_date = ""
+                    
+                    if '(' in header and ')' in header:
+                        try:
+                            position, dates = header.split('(')
+                            position = position.strip()
+                            dates = dates.strip(')')
+                            if '-' in dates:
+                                start_date, end_date = dates.split('-')
+                                start_date = start_date.strip()
+                                end_date = end_date.strip()
+                        except:
+                            # If date parsing fails, just use the whole header as position
+                            position = header
+                    
+                    # Remaining lines are bullet points
+                    description = '\n'.join([f'<li>{line.strip("* ").strip()}</li>' for line in lines[1:]])
+                    
+                    experience_html += f"""
+                    <div class="experience-item">
+                        <div class="experience-header">
+                            <div class="experience-company">{position}</div>
+                            <div class="experience-position"></div>
+                            <div class="experience-duration">{start_date} - {end_date}</div>
+                        </div>
+                        <div class="experience-description">
+                            <ul>
+                                {description}
+                            </ul>
+                        </div>
                     </div>
-                </section>
-                
-                <section id="experience" class="mb-5">
-                    <h2 class="mb-4">Professional Experience</h2>
-                    <div class="section-content">{sections['experience']}</div>
-                </section>
-                
-                <section id="projects" class="mb-5">
-                    <h2 class="mb-4">Projects</h2>
-                    <div class="section-content">{sections['projects']}</div>
-                </section>
-            </main>
-            
-            <footer class="bg-dark text-white py-4 mt-5">
-                <div class="container text-center">
-                    <p>&copy; 2024 My Portfolio. All rights reserved.</p>
-                </div>
-            </footer>
-            
-            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-        </body>
-        </html>
+                    """
+                except Exception as e:
+                    logger.error(f"Error parsing experience entry: {str(e)}")
+                    continue
+        
+        # Replace the entire experience section
+        experience_section = f"""
+            <h2 class="text-center mb-5">Professional Experience</h2>
+            {experience_html}
         """
+        template = template.replace('<!-- Experience Section -->\n    <section class="section bg-light">\n        <div class="container">\n            <h2 class="text-center mb-5">Professional Experience</h2>\n            {% for exp in experience %}\n            <div class="experience-item">\n                <div class="experience-header">\n                    <div class="experience-company">{{ exp.company }}</div>\n                    <div class="experience-position">{{ exp.position }}</div>\n                    <div class="experience-duration">{{ exp.start_date }} - {{ exp.end_date }}</div>\n                </div>\n                <div class="experience-description">\n                    {{ exp.description|linebreaks }}\n                </div>\n            </div>\n            {% endfor %}\n        </div>\n    </section>', experience_section)
+        
+        # Replace projects
+        projects_html = ''
+        if sections['projects']:
+            # Split the content into individual projects
+            project_entries = []
+            current_entry = []
+            
+            for line in sections['projects'].split('\n'):
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Check if this line starts a new project (starts with **)
+                if line.startswith('* **'):
+                    if current_entry:
+                        project_entries.append('\n'.join(current_entry))
+                        current_entry = []
+                current_entry.append(line)
+            
+            # Add the last entry if exists
+            if current_entry:
+                project_entries.append('\n'.join(current_entry))
+            
+            for entry in project_entries:
+                try:
+                    lines = [line.strip() for line in entry.split('\n') if line.strip()]
+                    if not lines:
+                        continue
+                    
+                    # First line is project title
+                    title = lines[0].strip('* **').strip('**')
+                    
+                    # Remaining lines are bullet points
+                    description = '\n'.join([f'<p>{line.strip("* ").strip()}</p>' for line in lines[1:]])
+                    
+                    projects_html += f"""
+                    <div class="col-md-6">
+                        <div class="project-card">
+                            <img src="/static/images/default-project.jpg" class="card-img-top" alt="{title}">
+                            <div class="card-body">
+                                <h5 class="card-title">{title}</h5>
+                                <p class="card-text">{description}</p>
+                                <a href="#" class="btn btn-primary">Explore Project</a>
+                            </div>
+                        </div>
+                    </div>
+                    """
+                except Exception as e:
+                    logger.error(f"Error parsing project entry: {str(e)}")
+                    continue
+        
+        # Replace the entire projects section
+        projects_section = f"""
+            <h2 class="text-center mb-5">Projects</h2>
+            <div class="row">
+                {projects_html}
+            </div>
+        """
+        template = template.replace('<!-- Projects Section -->\n    <section class="section">\n        <div class="container">\n            <h2 class="text-center mb-5">Projects</h2>\n            <div class="row">\n                {% for project in projects %}\n                <div class="col-md-6">\n                    <div class="project-card">\n                        <img src="{{ project.image }}" class="card-img-top" alt="{{ project.title }}">\n                        <div class="card-body">\n                            <h5 class="card-title">{{ project.title }}</h5>\n                            <p class="card-text">{{ project.description|linebreaks }}</p>\n                            <a href="{{ project.url }}" class="btn btn-primary">Explore Project</a>\n                        </div>\n                    </div>\n                </div>\n                {% endfor %}\n            </div>\n        </div>\n    </section>', projects_section)
+        
+        # Replace current year
+        template = template.replace('{{ current_year }}', str(datetime.now().year))
+        
+        return template
 
     def _clean_html(self, html_content: str) -> str:
         """Clean and format the generated HTML."""
@@ -314,7 +432,7 @@ class PortfolioGenerator:
             resume_text = parser.extract_text()
 
             # Generate content
-            content_generator = ContentGenerator(resume_text)
+            content_generator = ContentGenerator(resume_text, self.user)
             generated_content = content_generator.generate_content()
 
             # Create portfolio instance
@@ -386,122 +504,197 @@ class NetlifyDeployer:
         self.portfolio = portfolio
         self.netlify_token = settings.NETLIFY_TOKEN
         if not self.netlify_token:
+            logger.error("NETLIFY_TOKEN is missing.")
             raise ValueError("NETLIFY_TOKEN is required for deployment")
         
-        self.site_name = f"{portfolio.user.username}-site"
+        # Ensure site name is Netlify-compatible (lowercase, letters, numbers, hyphens)
+        self.site_name = f"{portfolio.user.username}-site".lower().replace('_', '-')
+        # Use MEDIA_ROOT setting correctly
         self.portfolio_path = os.path.join(settings.MEDIA_ROOT, 'portfolios', f"{portfolio.user.username}_{portfolio.template.name}")
+        self.api_base_url = "https://api.netlify.com/api/v1"
         self.headers = {
-            "Authorization": f"Bearer {self.netlify_token}",
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {self.netlify_token}"
         }
+        logger.info(f"NetlifyDeployer initialized for path: {self.portfolio_path} and site name: {self.site_name}")
 
     def deploy(self):
-        """Deploy the portfolio to Netlify"""
+        """Deploy the portfolio to Netlify by uploading a zip archive."""
         try:
-            logger.info("Starting portfolio deployment...")
+            logger.info(f"Starting portfolio deployment for site: {self.site_name}")
+
+            if not os.path.isdir(self.portfolio_path):
+                logger.error(f"Portfolio directory not found: {self.portfolio_path}")
+                raise FileNotFoundError(f"Portfolio directory not found: {self.portfolio_path}")
             
-            # Get or create the Netlify site
             logger.info("Getting or creating Netlify site...")
             site_id = self._get_or_create_site()
-            logger.info(f"Got site ID: {site_id}")
+            if not site_id:
+                 raise Exception("Could not get or create Netlify site.")
+            logger.info(f"Using site ID: {site_id}")
+
+            logger.info("Creating zip archive of the portfolio directory...")
+            zip_buffer = self._zip_directory(self.portfolio_path)
+            logger.info(f"Zip archive created in memory (Size: {zip_buffer.getbuffer().nbytes} bytes)")
+
+            # Upload the zip file to start deployment
+            logger.info("Uploading zip archive to Netlify...")
+            deploy_headers = self.headers.copy()
+            deploy_headers["Content-Type"] = "application/zip"
             
-            # Deploy the index.html file directly
-            logger.info("Deploying index.html...")
-            index_path = os.path.join(self.portfolio_path, 'index.html')
-            deploy_response = self._deploy_file(site_id, index_path)
-            logger.info("Deployment started successfully")
-            
-            # Update the portfolio status
-            self.portfolio.is_published = True
-            self.portfolio.save()
-            logger.info("Updated portfolio status to published")
-            
-            # Return the site URL
-            site_url = f"https://{self.site_name}.netlify.app"
-            logger.info(f"Deployment complete. Site URL: {site_url}")
-            return site_url
-            
+            upload_response = requests.post(
+                f"{self.api_base_url}/sites/{site_id}/deploys",
+                headers=deploy_headers,
+                data=zip_buffer.getvalue()
+            )
+            upload_response.raise_for_status()
+            deploy_details = upload_response.json()
+            deploy_id = deploy_details.get('id')
+            logger.info(f"Deployment initiated successfully. Deploy ID: {deploy_id}")
+
+            # Wait for the deployment to complete
+            logger.info("Waiting for deployment to finish processing...")
+            final_state = self._wait_for_deployment(deploy_id)
+
+            if final_state == 'ready':
+                logger.info("Deployment successful and site is live.")
+                self.portfolio.is_published = True
+                self.portfolio.netlify_site_id = site_id
+                self.portfolio.netlify_deploy_id = deploy_id
+                self.portfolio.netlify_url = deploy_details.get('deploy_ssl_url') or deploy_details.get('deploy_url')
+                self.portfolio.save()
+                logger.info(f"Updated portfolio status to published. Site URL: {self.portfolio.netlify_url}")
+                return self.portfolio.netlify_url
+            else:
+                logger.error(f"Netlify deployment failed or ended in state: {final_state}")
+                raise Exception(f"Netlify deployment failed with state: {final_state}")
+
+        except requests.exceptions.RequestException as req_e:
+            logger.error(f"Netlify API request failed: {req_e}")
+            if req_e.response is not None:
+                 logger.error(f"Response status: {req_e.response.status_code}")
+                 logger.error(f"Response body: {req_e.response.text}")
+            raise
         except Exception as e:
-            logger.error(f"Failed to deploy portfolio: {str(e)}")
-            logger.error(f"Error type: {type(e)}")
-            logger.error(f"Error args: {e.args}")
+            logger.error(f"Failed to deploy portfolio: {str(e)}", exc_info=True)
             raise
 
     def _get_or_create_site(self):
-        """Get existing site or create a new one"""
+        """Get existing site ID or create a new one."""
         try:
-            logger.info("Listing Netlify sites...")
-            # Get all sites
-            response = requests.get(
-                "https://api.netlify.com/api/v1/sites",
-                headers=self.headers
-            )
+            # List sites
+            list_url = f"{self.api_base_url}/sites"
+            logger.info(f"Listing sites via GET {list_url}")
+            response = requests.get(list_url, headers=self.headers, params={'filter': 'all'})
             response.raise_for_status()
             sites = response.json()
-            logger.info(f"Found {len(sites)} sites")
-            
-            # Try to find existing site
-            for site in sites:
-                logger.info(f"Checking site: {site}")
-                if site.get('name') == self.site_name:
-                    logger.info(f"Found existing site with ID: {site.get('id')}")
-                    return site.get('id')
-            
-            # Create new site if not found
-            logger.info("Creating new site...")
-            site_data = {
-                'name': self.site_name,
-                'custom_domain': None,
-                'password': None,
-                'ssl': True,
-                'force_ssl': True
-            }
-            
-            response = requests.post(
-                "https://api.netlify.com/api/v1/sites",
-                headers=self.headers,
-                json=site_data
-            )
-            response.raise_for_status()
-            new_site = response.json()
-            logger.info(f"Created new site: {new_site}")
-            return new_site.get('id')
-            
-        except Exception as e:
-            logger.error(f"Error getting/creating Netlify site: {str(e)}")
-            logger.error(f"Error type: {type(e)}")
-            logger.error(f"Error args: {e.args}")
-            raise
+            logger.info(f"Found {len(sites)} sites associated with the token.")
 
-    def _deploy_file(self, site_id, file_path):
-        """Deploy a single file to Netlify"""
-        try:
-            logger.info(f"Deploying file: {file_path}")
+            # Check if site exists
+            for site in sites:
+                if site.get('name') == self.site_name:
+                    logger.info(f"Found existing site '{self.site_name}' with ID: {site.get('id')}")
+                    return site.get('id')
+
+            # Create site if it doesn't exist
+            logger.info(f"Site '{self.site_name}' not found. Creating new site...")
+            create_url = f"{self.api_base_url}/sites"
+            site_data = {'name': self.site_name}
             
-            # Read the file content
-            with open(file_path, 'r', encoding='utf-8') as f:
-                file_content = f.read()
+            create_response = requests.post(create_url, headers=self.headers, json=site_data)
             
-            # Prepare the deploy data with the file content
-            deploy_data = {
-                'files': {
-                    'index.html': file_content
-                }
-            }
-            
-            # Deploy the file
-            response = requests.post(
-                f"https://api.netlify.com/api/v1/sites/{site_id}/deploys",
-                headers={
-                    "Authorization": f"Bearer {self.netlify_token}",
-                    "Content-Type": "application/json"
-                },
-                json=deploy_data
-            )
-            response.raise_for_status()
-            
-            return response.json()
-            
+            if create_response.status_code == 422:
+                 logger.error(f"Site name '{self.site_name}' might already be taken or invalid.")
+                 time.sleep(2)
+                 response = requests.get(list_url, headers=self.headers, params={'filter': 'all'})
+                 response.raise_for_status()
+                 sites = response.json()
+                 for site in sites:
+                     if site.get('name') == self.site_name:
+                         logger.info(f"Found existing site '{self.site_name}' after creation conflict. ID: {site.get('id')}")
+                         return site.get('id')
+                 logger.error(f"Could not create or find site '{self.site_name}' after conflict.")
+                 return None
+
+            create_response.raise_for_status()
+            new_site = create_response.json()
+            logger.info(f"Created new site: {new_site.get('name')} with ID: {new_site.get('id')}")
+            return new_site.get('id')
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error getting/creating Netlify site: {e}")
+            if e.response is not None:
+                logger.error(f"Response status: {e.response.status_code}")
+                logger.error(f"Response body: {e.response.text}")
+            return None
         except Exception as e:
-            logger.error(f"Error deploying file: {str(e)}")
-            raise 
+            logger.error(f"Unexpected error in _get_or_create_site: {e}", exc_info=True)
+            return None
+
+    def _zip_directory(self, path):
+        """Creates a zip archive of a directory in memory."""
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            # First, add the index.html file at the root
+            index_path = os.path.join(path, 'index.html')
+            if os.path.exists(index_path):
+                # Read the file content
+                with open(index_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                
+                # Ensure proper HTML content type
+                zf.writestr('index.html', content)
+            
+            # Then add all other files maintaining their directory structure
+            for root, _, files in os.walk(path):
+                for file in files:
+                    if file == 'index.html':  # Skip index.html as we already added it
+                        continue
+                    file_path = os.path.join(root, file)
+                    # Calculate the relative path from the portfolio directory
+                    rel_path = os.path.relpath(file_path, path)
+                    # Ensure paths use forward slashes for web compatibility
+                    rel_path = rel_path.replace('\\', '/')
+                    
+                    # Read the file content
+                    with open(file_path, 'rb') as f:
+                        content = f.read()
+                    
+                    # Write the file content to the zip
+                    zf.writestr(rel_path, content)
+        
+        buffer.seek(0)
+        return buffer
+
+    def _wait_for_deployment(self, deploy_id, timeout=300, interval=5):
+        """Polls Netlify API to check deployment status."""
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                deploy_url = f"{self.api_base_url}/deploys/{deploy_id}"
+                response = requests.get(deploy_url, headers=self.headers)
+                response.raise_for_status()
+                deploy_status = response.json()
+                state = deploy_status.get('state')
+                logger.info(f"Current deployment state: {state}")
+
+                if state == 'ready':
+                    return 'ready'
+                elif state in ['error', 'failed']:
+                    logger.error(f"Deployment failed. Status: {deploy_status}")
+                    return state
+                elif state == 'building' or state == 'uploading' or state == 'processing':
+                    pass
+                else:
+                    logger.warning(f"Unknown deployment state encountered: {state}")
+
+                time.sleep(interval)
+
+            except requests.exceptions.RequestException as e:
+                logger.error(f"Error polling deployment status: {e}")
+                time.sleep(interval)
+            except Exception as e:
+                logger.error(f"Unexpected error during polling: {e}", exc_info=True)
+                return "polling_error"
+
+        logger.error(f"Deployment polling timed out after {timeout} seconds.")
+        return 'timeout' 

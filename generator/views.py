@@ -8,6 +8,7 @@ from .forms import ResumeUploadForm, PortfolioTemplateForm
 from .services import PortfolioGenerator, ContentGenerator, NetlifyDeployer
 import os
 from django.conf import settings
+from datetime import datetime
 
 
 @login_required
@@ -123,26 +124,76 @@ def manage_templates(request):
 def serve_portfolio(request, portfolio_id):
     portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
     
-    # Construct the path to the index.html file
-    portfolio_path = os.path.join(settings.MEDIA_ROOT, 'portfolios', f"{request.user.username}_{portfolio.template.name}")
-    index_path = os.path.join(portfolio_path, 'index.html')
+    # Get the generated content
+    content = portfolio.generated_content
     
-    try:
-        # Read the index.html file
-        with open(index_path, 'r', encoding='utf-8') as f:
-            content = f.read()
+    # Prepare the content for the template
+    template_context = {
+        'about': {
+            'title': f"{request.user.get_full_name() or request.user.username}'s Portfolio",
+            'subtitle': content.get('about', ''),
+            'description': content.get('about', ''),
+            'profile_image': '/static/images/default-profile.jpg',  # Default image
+            'social_links': [],  # Empty for now, can be added later
+            'background_pattern': '/static/images/pattern.png'  # Default pattern
+        },
+        'skills': [{'name': skill} for skill in content.get('skills', [])],
+        'experience': [],
+        'projects': [],
+        'education': [],  # Empty for now, can be added later
+        'current_year': datetime.now().year
+    }
+    
+    # Parse experience
+    experience_text = content.get('experience', '')
+    if experience_text:
+        experience_entries = experience_text.split('\n\n')  # Split by double newline for each job
+        for entry in experience_entries:
+            lines = entry.strip().split('\n')
+            if not lines:
+                continue
+                
+            # First line contains position and dates
+            header = lines[0].strip('* **').strip('**')
+            position, dates = header.split('(')
+            position = position.strip()
+            start_date, end_date = dates.strip(')').split('-')
             
-        # Update relative paths to use the correct media URL
-        content = content.replace('href="css/', f'href="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/css/')
-        content = content.replace('src="js/', f'src="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/js/')
-        content = content.replace('src="images/', f'src="{settings.MEDIA_URL}portfolios/{request.user.username}_{portfolio.template.name}/images/')
-        
-        # Serve the content with appropriate content type
-        return HttpResponse(content, content_type='text/html')
-    except FileNotFoundError:
-        return HttpResponse("Portfolio site not found. Please try generating the portfolio again.", status=404)
-    except Exception as e:
-        return HttpResponse(f"Error serving portfolio: {str(e)}", status=500)
+            # Remaining lines are bullet points
+            description = '\n'.join([line.strip('* ').strip() for line in lines[1:]])
+            
+            template_context['experience'].append({
+                'position': position,
+                'company': '',  # Can be extracted if needed
+                'description': description,
+                'start_date': start_date.strip(),
+                'end_date': end_date.strip()
+            })
+    
+    # Parse projects
+    projects_text = content.get('projects', '')
+    if projects_text:
+        project_entries = projects_text.split('\n\n')  # Split by double newline for each project
+        for entry in project_entries:
+            lines = entry.strip().split('\n')
+            if not lines:
+                continue
+                
+            # First line is project title
+            title = lines[0].strip('* **').strip('**')
+            
+            # Remaining lines are bullet points
+            description = '\n'.join([line.strip('* ').strip() for line in lines[1:]])
+            
+            template_context['projects'].append({
+                'title': title,
+                'description': description,
+                'image': '/static/images/default-project.jpg',  # Default image
+                'url': '#'  # Default URL
+            })
+    
+    # Return the generated HTML content directly
+    return HttpResponse(content['html_content'], content_type='text/html')
 
 @login_required
 def delete_portfolio(request, portfolio_id):
