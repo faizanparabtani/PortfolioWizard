@@ -213,7 +213,7 @@ def serve_portfolio(request, portfolio_id):
             'social_links': [],  # Empty for now, can be added later
             'background_pattern': '/static/images/pattern.png'  # Default pattern
         },
-        'skills': [{'name': skill} for skill in content.get('skills', [])],
+        'skills': [{'name': skill.strip()} for skill in content.get('skills', [])],
         'experience': [],
         'projects': [],
         'education': [],  # Empty for now, can be added later
@@ -231,20 +231,31 @@ def serve_portfolio(request, portfolio_id):
                 
             # First line contains position and dates
             header = lines[0].strip('* **').strip('**')
-            position, dates = header.split('(')
-            position = position.strip()
-            start_date, end_date = dates.strip(')').split('-')
-            
-            # Remaining lines are bullet points
-            description = '\n'.join([line.strip('* ').strip() for line in lines[1:]])
-            
-            template_context['experience'].append({
-                'position': position,
-                'company': '',  # Can be extracted if needed
-                'description': description,
-                'start_date': start_date.strip(),
-                'end_date': end_date.strip()
-            })
+            try:
+                position, dates = header.split('(')
+                position = position.strip()
+                start_date, end_date = dates.strip(')').split('-')
+                
+                # Extract company name from the first line if it exists
+                company = ''
+                if ' at ' in position:
+                    position, company = position.split(' at ')
+                    position = position.strip()
+                    company = company.strip()
+                
+                # Remaining lines are bullet points
+                description = '\n'.join([line.strip('* ').strip() for line in lines[1:]])
+                
+                template_context['experience'].append({
+                    'position': position,
+                    'company': company,
+                    'description': description,
+                    'start_date': start_date.strip(),
+                    'end_date': end_date.strip()
+                })
+            except Exception as e:
+                print(f"Error parsing experience entry: {e}")
+                continue
     
     # Parse projects
     projects_text = content.get('projects', '')
