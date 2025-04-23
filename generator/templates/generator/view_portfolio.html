@@ -30,13 +30,16 @@
                 <div class="card-body">
                     <h5 class="card-title">Actions</h5>
                     <div class="d-flex gap-2">
+                        <a href="{% url 'generator:edit_portfolio' portfolio.id %}" class="btn btn-outline-primary">
+                            <i class="fas fa-edit"></i> Edit
+                        </a>
                         <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-primary" target="_blank">
                             <i class="fas fa-external-link-alt"></i> Open in New Tab
                         </a>
                         <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-success">
                             <i class="fas fa-rocket"></i> Deploy
                         </a>
-                        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                             <i class="fas fa-trash"></i> Delete
                         </button>
                     </div>

@@ -320,3 +320,25 @@ def deploy_portfolio(request, portfolio_id):
             messages.error(request, f'Failed to deploy portfolio: {str(e)}')
     
     return redirect('generator:view_portfolio', portfolio_id=portfolio.id)
+
+@login_required
+def edit_portfolio(request, portfolio_id):
+    portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
+    
+    if request.method == 'POST':
+        # Save the edited content
+        edited_content = request.POST.get('html_content', '')
+        if edited_content:
+            portfolio.generated_content['html_content'] = edited_content
+            portfolio.save()
+            messages.success(request, 'Portfolio updated successfully!')
+            return redirect('generator:view_portfolio', portfolio_id=portfolio.id)
+    
+    # Get the current HTML content
+    html_content = portfolio.generated_content.get('html_content', '')
+    
+    context = {
+        'portfolio': portfolio,
+        'html_content': html_content,
+    }
+    return render(request, 'generator/edit_portfolio.html', context)

@@ -92,14 +92,14 @@ class ContentGenerator:
 
     def _get_simplified_prompt(self):
         """Create a simplified prompt for content generation"""
-        return f"""Analyze this resume and create portfolio content:
+        return f"""Analyze this resume and create portfolio website content, elaborate where necessary and use impactful sentences:
 
             {self.resume_text}
 
             Format your response EXACTLY as follows (keep the section headers exactly as shown):
 
             [ABOUT]
-            A software engineer with X years of experience specializing in... (write 2-3 sentences based on the resume, in first person)
+            A software engineer with X years of experience specializing in... (write 2-3 impactful sentences based on the resume, in first person)
 
             [SKILLS]
             * Python
@@ -221,23 +221,31 @@ class ContentGenerator:
         template = template.replace('{{ about.description }}', sections['about'])
         
         # Replace skills section
-        skills_html = ''.join([f'<div class="col-md-4 skill-item"><div class="card"><div class="card-body"><h5 class="card-title">{skill}</h5></div></div></div>' for skill in sections['skills']])
-        template = template.replace('{% for skill in skills %}\n                <div class="col-md-4 skill-item">\n                    <div class="card">\n                        <div class="card-body">\n                            <h5 class="card-title">{{ skill.name }}</h5>\n                        </div>\n                    </div>\n                </div>\n                {% endfor %}', skills_html)
+        skills_html = ''.join([f'''
+            <span class="skill-badge">{skill}</span>
+        ''' for skill in sections['skills']])
+        
+        # Replace the entire skills section block
+        template = template.replace(
+            '{% for skill in skills %}\n                <span class="skill-badge">{{ skill.name }}</span>\n                {% endfor %}',
+            skills_html
+        )
         
         # Replace experience section
         experience_html = ''
-        if sections['experience']:
+        experience_text = sections['experience']
+        if experience_text:
             # Split the content into individual experiences
             experience_entries = []
             current_entry = []
             
-            for line in sections['experience'].split('\n'):
+            for line in experience_text.split('\n'):
                 line = line.strip()
                 if not line:
                     continue
                     
                 # Check if this line starts a new experience (contains a date range in parentheses)
-                if '(' in line and ')' in line and '-' in line:
+                if line.startswith('* **') and '(' in line and ')' in line and '-' in line:
                     if current_entry:
                         experience_entries.append('\n'.join(current_entry))
                         current_entry = []
@@ -255,34 +263,26 @@ class ContentGenerator:
                     
                     # First line contains position and dates
                     header = lines[0].strip('* **').strip('**')
+                    position, dates = header.split('(')
+                    position = position.strip()
+                    start_date, end_date = dates.strip(')').split('-')
                     
-                    # Try to extract position and dates
-                    position = header
-                    start_date = "Present"
-                    end_date = "Present"
-                    
-                    if '(' in header and ')' in header:
-                        try:
-                            position, dates = header.split('(')
-                            position = position.strip()
-                            dates = dates.strip(')')
-                            if '-' in dates:
-                                start_date, end_date = dates.split('-')
-                                start_date = start_date.strip()
-                                end_date = end_date.strip()
-                        except:
-                            # If date parsing fails, just use the whole header as position
-                            position = header
+                    # Extract company name from the first line if it exists
+                    company = ''
+                    if ' at ' in position:
+                        position, company = position.split(' at ')
+                        position = position.strip()
+                        company = company.strip()
                     
                     # Remaining lines are bullet points
                     description = '\n'.join([f'<li>{line.strip("* ").strip()}</li>' for line in lines[1:]])
                     
-                    experience_html += f"""
+                    experience_html += f'''
                     <div class="experience-item">
                         <div class="experience-header">
-                            <div class="experience-company">{position}</div>
-                            <div class="experience-position"></div>
-                            <div class="experience-duration">{start_date} - {end_date}</div>
+                            <div class="experience-company">{company}</div>
+                            <div class="experience-position">{position}</div>
+                            <div class="experience-duration">{start_date.strip()} - {end_date.strip()}</div>
                         </div>
                         <div class="experience-description">
                             <ul>
@@ -290,17 +290,16 @@ class ContentGenerator:
                             </ul>
                         </div>
                     </div>
-                    """
+                    '''
                 except Exception as e:
-                    logger.error(f"Error parsing experience entry: {str(e)}")
+                    logger.error(f"Error parsing experience entry: {e}")
                     continue
         
-        # Replace the entire experience section
-        experience_section = f"""
-            <h2 class="text-center mb-5">Professional Experience</h2>
-            {experience_html}
-        """
-        template = template.replace('{% for exp in experience %}\n            <div class="experience-item">\n                <div class="experience-header">\n                    <div class="experience-company">{{ exp.position }}</div>\n                    <div class="experience-position">{{ exp.company }}</div>\n                    <div class="experience-duration">{{ exp.start_date }} - {{ exp.end_date }}</div>\n                </div>\n                <div class="experience-description">\n                    {{ exp.description|linebreaks }}\n                </div>\n            </div>\n            {% endfor %}', experience_html)
+        # Replace the entire experience section block
+        template = template.replace(
+            '{% for exp in experience %}\n            <div class="experience-item">\n                <div class="experience-header">\n                    <div class="experience-company">{{ exp.company }}</div>\n                    <div class="experience-position">{{ exp.position }}</div>\n                    <div class="experience-duration">{{ exp.start_date }} - {{ exp.end_date }}</div>\n                </div>\n                <div class="experience-description">\n                    {{ exp.description|linebreaks }}\n                </div>\n            </div>\n            {% endfor %}',
+            experience_html
+        )
         
         # Replace projects section
         projects_html = ''
@@ -351,11 +350,74 @@ class ContentGenerator:
                     logger.error(f"Error parsing project entry: {str(e)}")
                     continue
         
-        # Replace the entire projects section
-        template = template.replace('{% for project in projects %}\n                <div class="col-md-6">\n                    <div class="project-card">\n                        <div class="card-body">\n                            <h5 class="card-title">{{ project.title }}</h5>\n                            <div class="card-text">{{ project.description|linebreaks }}</div>\n                        </div>\n                    </div>\n                </div>\n                {% endfor %}', projects_html)
+        # Replace the entire projects section block
+        template = template.replace(
+            '{% for project in projects %}\n                <div class="col-md-6">\n                    <div class="project-card">\n                        <div class="card-body">\n                            <h5 class="card-title">{{ project.title }}</h5>\n                            <div class="card-text">{{ project.description|linebreaks }}</div>\n                        </div>\n                    </div>\n                </div>\n                {% endfor %}',
+            projects_html
+        )
         
         # Replace current year
         template = template.replace('{{ current_year }}', str(datetime.now().year))
+        
+        # Add CSS styles
+        css = '''
+        <style>
+            .skill-card {
+                background: white;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            
+            .skill-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            }
+            
+            .skill-title {
+                color: #333;
+                font-weight: 600;
+                margin-bottom: 15px;
+            }
+            
+            .skill-progress {
+                height: 6px;
+                background: #f0f0f0;
+                border-radius: 3px;
+                overflow: hidden;
+            }
+            
+            .progress-bar {
+                height: 100%;
+                background: linear-gradient(90deg, #6c5ce7, #a8a4e0);
+                transition: width 1.5s ease-in-out;
+            }
+            
+            .skill-item {
+                opacity: 0;
+                transform: translateY(20px);
+                animation: fadeInUp 0.5s ease forwards;
+            }
+            
+            @keyframes fadeInUp {
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            
+            /* Stagger the animations */
+            .skill-item:nth-child(1) { animation-delay: 0.1s; }
+            .skill-item:nth-child(2) { animation-delay: 0.2s; }
+            .skill-item:nth-child(3) { animation-delay: 0.3s; }
+            .skill-item:nth-child(4) { animation-delay: 0.4s; }
+            .skill-item:nth-child(5) { animation-delay: 0.5s; }
+            .skill-item:nth-child(6) { animation-delay: 0.6s; }
+        </style>
+        '''
+        template = template.replace('</head>', css + '</head>')
         
         return template
 

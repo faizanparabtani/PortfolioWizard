@@ -21,4 +21,5 @@ urlpatterns = [
     path('portfolios/<int:portfolio_id>/delete/', views.delete_portfolio, name='delete_portfolio'),
     path('portfolios/<int:portfolio_id>/deploy/', views.deploy_portfolio, name='deploy_portfolio'),
     path('manage-templates/', views.manage_templates, name='manage_templates'),
+    path('portfolio/<int:portfolio_id>/edit/', views.edit_portfolio, name='edit_portfolio'),
 ] 
