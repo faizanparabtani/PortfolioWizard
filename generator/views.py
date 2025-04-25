@@ -310,7 +310,6 @@ def delete_portfolio(request, portfolio_id):
 @login_required
 def deploy_portfolio(request, portfolio_id):
     portfolio = get_object_or_404(GeneratedPortfolio, id=portfolio_id, user=request.user)
-    
     if request.method == 'POST':
         try:
             deployer = NetlifyDeployer(portfolio)

@@ -36,9 +36,12 @@
                         <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-primary" target="_blank">
                             <i class="fas fa-external-link-alt"></i> Open in New Tab
                         </a>
-                        <a href="{% url 'generator:deploy_portfolio' portfolio.id %}" class="btn btn-success">
-                            <i class="fas fa-rocket"></i> Deploy
-                        </a>
+                        <form method="post" action="{% url 'generator:deploy_portfolio' portfolio.id %}" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-rocket"></i> Deploy
+                            </button>
+                        </form>
                         <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
                             <i class="fas fa-trash"></i> Delete
                         </button>

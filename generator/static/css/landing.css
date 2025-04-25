@@ -1,0 +1,253 @@
+:root {
+    --heading-font: 'Poppins', sans-serif;
+    --body-font: 'Inter', sans-serif;
+    --bg-gradient-1: #1a1a2e;
+    --bg-gradient-2: #16213e;
+    --bg-gradient-3: #0f3460;
+}
+
+body {
+    font-family: var(--body-font);
+    color: white;
+    background: linear-gradient(135deg, var(--bg-gradient-1), var(--bg-gradient-2), var(--bg-gradient-3));
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+    min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--body-font);
+    color: white;
+}
+
+/* Paragraph Styles */
+p {
+    font-family: var(--body-font);
+    color: white;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+}
+
+.lead {
+    font-size: 1.25rem;
+    font-weight: 300;
+}
+
+.card-text {
+    font-size: 1rem;
+}
+
+/* Hero Section */
+.hero-section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-image-container {
+    position: relative;
+    height: 500px;
+}
+
+.floating-card {
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--text-primary);
+    animation: float 8s ease-in-out infinite;
+}
+
+.card-1 {
+    top: 5%;
+    left: 5%;
+    animation-delay: 0s;
+    animation-duration: 6s;
+    z-index: 3;
+}
+
+.card-2 {
+    top: 35%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    animation-delay: 2s;
+    animation-duration: 7s;
+    z-index: 2;
+}
+
+.card-3 {
+    bottom: 5%;
+    right: 5%;
+    animation-delay: 4s;
+    animation-duration: 8s;
+    z-index: 1;
+}
+
+/* Features Section */
+.feature-card {
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+}
+
+.feature-icon {
+    font-size: 3rem;
+    color: var(--primary-color);
+}
+
+/* How It Works Section */
+.step-card {
+    transition: transform 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-5px);
+}
+
+.step-number {
+    width: 50px;
+    height: 50px;
+    background: var(--primary-gradient);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+
+/* CTA Sections */
+.cta-section, .final-cta {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin: 2rem 0;
+}
+
+/* Animations */
+@keyframes float {
+    0% { 
+        transform: translateY(0) rotate(0deg);
+    }
+    25% { 
+        transform: translateY(-15px) rotate(3deg);
+    }
+    50% { 
+        transform: translateY(0) rotate(0deg);
+    }
+    75% { 
+        transform: translateY(15px) rotate(-3deg);
+    }
+    100% { 
+        transform: translateY(0) rotate(0deg);
+    }
+}
+
+/* Gradient Text */
+.gradient-text {
+    background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Privacy Section */
+.privacy-section {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+}
+
+.privacy-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 20px;
+}
+
+.privacy-feature {
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.privacy-feature i {
+    font-size: 2.5rem;
+    color: var(--primary-color);
+}
+
+.privacy-feature h4 {
+    margin: 1rem 0;
+    font-family: var(--heading-font);
+}
+
+.privacy-feature p {
+    font-size: 0.95rem;
+    opacity: 0.9;
+}
+
+/* Theme Toggle Button */
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(180deg);
+}
+
+.theme-toggle i {
+    font-size: 1.5rem;
+    color: white;
+}
+
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Section Backgrounds */
+.privacy-section, .features-section, .cta-section, .how-it-works, .final-cta {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    margin: 2rem 0;
+    padding: 3rem 0;
+}
+
+/* Card Styles */
+.card {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    background: rgba(255, 255, 255, 0.15);
+}

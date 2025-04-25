@@ -139,15 +139,11 @@ GEMINI_API_KEY = os.getenv('GEMINI_API_KEY')
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY environment variable is required")
 
-# Remove OpenAI settings
-# OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
-# if not OPENAI_API_KEY:
-#     raise ValueError("OPENAI_API_KEY environment variable is required")
 
 # Netlify Settings
 NETLIFY_TOKEN = os.getenv('NETLIFY_TOKEN')
 if not NETLIFY_TOKEN:
-    logger.warning("NETLIFY_TOKEN is not set. Deployment to Netlify will not work.")
+    logger.warning("NETLIFY_TOKEN is not set in .env file. Deployment to Netlify will not work.")
 
 # Set up logging
 LOGGING = {
