@@ -18,6 +18,10 @@ import time
 # Store generation status
 generation_status = {}
 
+
+def landing(request):
+    return render(request, 'generator/landing.html')
+
 @login_required
 def dashboard(request):
     # Get user's resumes

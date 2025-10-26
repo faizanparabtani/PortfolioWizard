@@ -5,10 +5,10 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     path('', include('generator.urls')),
     path('users/', include('users.urls')),
-    path('logout/', auth_views.LogoutView.as_view(next_page='users:login'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+    path('admin/', admin.site.urls),
 ]
 
 # Serve media files in development

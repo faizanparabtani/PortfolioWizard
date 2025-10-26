@@ -27,6 +27,14 @@ class ContentGenerator:
         self.max_retries = 3
         self.initial_delay = 1.0  # Initial delay in seconds
         self.max_delay = 10.0  # Maximum delay in seconds
+    
+    def generate_content_hugging_face(self):
+        """Generate Structured Portfolio Site Content Using Hugging Face Hub API"""
+        try:
+            pass
+        except:
+            pass
+        return
 
     def generate_content(self):
         """Generate portfolio content using Gemini API"""

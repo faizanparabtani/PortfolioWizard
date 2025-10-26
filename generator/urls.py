@@ -5,7 +5,8 @@ app_name = 'generator'
 
 urlpatterns = [
     # Dashboard and main navigation
-    path('', views.dashboard, name='dashboard'),
+    path('', views.landing, name='landing'),
+    path('dashboard', views.dashboard, name='dashboard'),
     
     # Resume management
     path('resumes/upload/', views.upload_resume, name='upload_resume'),
