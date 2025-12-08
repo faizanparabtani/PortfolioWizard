@@ -1,0 +1,66 @@
+{% load static %}
+{% load static tailwind_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}PortfolioWizard - AI Resume Builder{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous"></link>
+  <link rel="icon" href="https://res.cloudinary.com/dklhalalp/image/upload/v1761549795/wizard_zv3vim.png" type="image/png">
+  {% tailwind_css %}
+</head>
+<body class="min-h-screen text-white bg-black font-[Inter]">
+  <nav class="fixed w-full z-50 bg-white/10 backdrop-blur-md border-b border-white/10">
+  <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+    <!-- Logo -->
+    <a href="{% url 'generator:dashboard' %}" class="text-2xl font-bold bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">
+      PortfolioWizard
+    </a>
+    <!-- Desktop Navigation -->
+    <ul class="hidden md:flex space-x-8 font-medium">
+      <li><a href="#features" class="hover:text-indigo-400 transition">Features</a></li>
+      <li><a href="#how-it-works" class="hover:text-indigo-400 transition">How It Works</a></li>
+      <li><a href="#privacy" class="hover:text-indigo-400 transition">Privacy</a></li>
+
+      {% if user.is_authenticated %}
+        <li>
+          <form method="post" action="{% url 'logout' %}" class="inline">
+            {% csrf_token %}
+            <button type="submit" class="hover:text-indigo-400 transition font-medium">
+              Logout
+            </button>
+          </form>
+        </li>
+      {% else %}
+        <li><a href="{% url 'users:login' %}" class="hover:text-indigo-400 transition">Login</a></li>
+        <li><a href="{% url 'users:register' %}" class="hover:text-indigo-400 transition">Sign Up</a></li>
+      {% endif %}
+    </ul>
+
+    <!-- Mobile Navigation: right-aligned login/logout -->
+    <div class="md:hidden">
+      {% if user.is_authenticated %}
+        <form method="post" action="{% url 'logout' %}">
+          {% csrf_token %}
+          <button type="submit" class="hover:text-indigo-400 transition font-medium">
+            Logout
+          </button>
+        </form>
+      {% else %}
+        <a href="{% url 'users:login' %}" class="hover:text-indigo-400 transition font-medium">
+          Login
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</nav>
+
+
+  <main class="pt-18 md:pt-20">{% block content %}{% endblock %}</main>
+  <footer class="mt-20 py-10 text-center text-gray-400 text-sm bg-white/5 backdrop-blur-md border-t border-white/10">
+    © {% now "Y" %} PortfolioWizard. All rights reserved.
+  </footer>
+</body>
+</html>

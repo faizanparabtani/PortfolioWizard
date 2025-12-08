@@ -30,4 +30,4 @@ def user_login(request):
                 return redirect('generator:dashboard')
     else:
         form = UserLoginForm()
-    return render(request, 'users/login.html', {'form': form})
+    return render(request, 'theme/login.html', {'form': form})

@@ -1,0 +1,53 @@
+{% extends 'theme/base.html' %}
+
+{% block title %}Login - PortfolioWizard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-start justify-center px-4 sm:px-6 lg:px-8 bg-black">
+    <div class="max-w-md w-full space-y-8">
+        <div>
+            <h2 class="mt-6 text-center text-2xl font-extrabold text-white">
+                Login to PortfolioWizard
+            </h2>
+        </div>
+
+        <form method="post" class="mt-8 space-y-6">
+            {% csrf_token %}
+
+            <!-- Username -->
+            <div>
+                <label for="id_username" class="block text-sm font-medium text-gray-200 mb-1">Username</label>
+                <input type="text" name="username" id="id_username" required
+                    class="appearance-none w-full px-4 py-2 rounded-lg border border-gray-400 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                {% if form.username.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.username.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label for="id_password" class="block text-sm font-medium text-gray-200 mb-1">Password</label>
+                <input type="password" name="password" id="id_password" required
+                    class="appearance-none w-full px-4 py-2 rounded-lg border border-gray-400 bg-gray-800 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                {% if form.password.errors %}
+                    <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <div>
+                <button type="submit" class="w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold">
+                    <i class="fas fa-sign-in-alt mr-2"></i>Login
+                </button>
+            </div>
+        </form>
+
+        <div class="text-center text-gray-300 mt-4">
+            <p>
+                Don't have an account? 
+                <a href="{% url 'users:register' %}" class="text-blue-400 hover:underline">Register here</a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

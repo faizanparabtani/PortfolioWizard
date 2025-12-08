@@ -1,0 +1,88 @@
+{% extends 'theme/base.html' %}
+{% block title %}PortfolioWizard - AI Resume Builder{% endblock %}
+{% block content %}
+<section class="text-center py-12 px-6">
+  <h1 class="text-5xl md:text-6xl font-bold mb-6 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Build Your Resume with AI</h1>
+  <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8">PortfolioWizard helps you generate professional, tailored resumes in seconds using artificial intelligence.</p>
+  <a href="{% url 'users:login' %}" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-full text-white font-semibold transition">Get Started</a>
+</section>
+
+<section id="features" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
+  <div class="max-w-6xl mx-auto text-center">
+    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Why Choose PortfolioWizard?</h2>
+    <div class="grid md:grid-cols-3 gap-10">
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-robot text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">AI-Powered</h4>
+        <p class="text-gray-300">Leverage AI to craft the perfect resume customized for your job role.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-file-alt text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">ATS Friendly</h4>
+        <p class="text-gray-300">Every resume generated is optimized for Applicant Tracking Systems.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-bolt text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">Instant Results</h4>
+        <p class="text-gray-300">Generate and download your resume instantly — no waiting required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
+  <div class="max-w-6xl mx-auto text-center">
+    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">How It Works</h2>
+    <div class="grid md:grid-cols-4 gap-8">
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <div class="text-3xl font-bold text-indigo-400 mb-4">1</div>
+        <h4 class="text-xl font-semibold mb-2">Enter Details</h4>
+        <p class="text-gray-300">Provide your education, experience, and skills in our easy form.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <div class="text-3xl font-bold text-indigo-400 mb-4">2</div>
+        <h4 class="text-xl font-semibold mb-2">AI Generation</h4>
+        <p class="text-gray-300">Our AI crafts a personalized, professional resume for you.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <div class="text-3xl font-bold text-indigo-400 mb-4">3</div>
+        <h4 class="text-xl font-semibold mb-2">Preview & Edit</h4>
+        <p class="text-gray-300">Tweak your resume to perfection with our built-in editor.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <div class="text-3xl font-bold text-indigo-400 mb-4">4</div>
+        <h4 class="text-xl font-semibold mb-2">Download</h4>
+        <p class="text-gray-300">Download your resume instantly in multiple formats.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="privacy" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
+  <div class="max-w-6xl mx-auto text-center">
+    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Your Data is Secure</h2>
+    <div class="grid md:grid-cols-3 gap-10">
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-shield-alt text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">Secure Storage</h4>
+        <p class="text-gray-300">Your data is encrypted and stored securely.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-lock text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">Data Protection</h4>
+        <p class="text-gray-300">We never share your information without consent.</p>
+      </div>
+      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
+        <i class="fas fa-user-shield text-4xl text-indigo-400 mb-4"></i>
+        <h4 class="text-xl font-semibold mb-2">Privacy Control</h4>
+        <p class="text-gray-300">You can delete your data anytime.</p>
+      </div>
+    </div>
+  </div>
+</section>
+<section id="cta" class="my-12 py-16 px-6 text-center bg-white/5 backdrop-blur-md rounded-2xl">
+  <h2 class="text-4xl font-bold mb-6 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Ready to Build Your Resume?</h2>
+  <p class="text-lg text-gray-300 mb-8">Start now and create your professional resume in minutes.</p>
+  <a href="{% url 'users:login' %}" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-full text-white font-semibold transition">Generate My Resume</a>
+</section>
+{% endblock %}

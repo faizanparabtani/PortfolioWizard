@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+}
+
+
+@source "../../../**/*.{html,py,js}";

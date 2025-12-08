@@ -4,8 +4,6 @@ from dotenv import load_dotenv
 import logging
 from .logging_config import logging_config
 
-
-# Load environment variables from .env file
 load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,17 +12,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
-# SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
 ALLOWED_HOSTS = []
 
 
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -35,9 +30,16 @@ INSTALLED_APPS = [
     # Custom Apps
     'generator',
     'users',
+    'tailwind',
+    'theme',
+    'django_browser_reload',
+    'corsheaders',
 ]
 
+TAILWIND_APP_NAME = 'theme'
+
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -45,6 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_browser_reload.middleware.BrowserReloadMiddleware',
 ]
 
 ROOT_URLCONF = 'portfolio_site_generator.urls'
@@ -52,7 +55,7 @@ ROOT_URLCONF = 'portfolio_site_generator.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'theme/templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -144,3 +147,7 @@ if not NETLIFY_TOKEN:
 
 # Set up logging
 LOGGING = logging_config
+
+CORS_ALLOWED_ORIGINS = [
+        "https://kit.fontawesome.com",
+    ]

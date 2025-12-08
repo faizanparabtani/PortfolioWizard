@@ -1,0 +1,63 @@
+{% extends 'theme/base.html' %}
+
+{% block title %}Upload Resume - PortfolioWizard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen max-w-5xl mx-auto mt-8 px-4">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+    <h1 class="text-2xl font-semibold flex items-center gap-2 text-white">
+      <i class="fas fa-upload"></i> Upload Resume
+    </h1>
+    <a href="{% url 'generator:dashboard' %}" class="inline-flex items-center gap-2 px-4 py-2 border border-white/20 rounded-lg bg-white/5 hover:bg-white/10 text-white transition">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+  </div>
+
+  <!-- Form Card -->
+  <div class="bg-white/5 backdrop-blur-md border border-white/20 rounded-2xl shadow-md p-6">
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- File Upload Field -->
+      <div class="flex flex-col">
+        <label for="{{ form.file.id_for_label }}" class="mb-2 font-medium text-white">Resume File</label>
+        <input 
+          type="file" 
+          name="{{ form.file.name }}" 
+          id="{{ form.file.id_for_label }}" 
+          class="bg-white/5 text-white rounded-xl px-4 py-3 border border-white/20 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition cursor-pointer"
+        >
+        {% if form.file.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.file.errors }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Other Fields -->
+      {% for field in form %}
+        {% if field.name != "file" %}
+          <div class="flex flex-col">
+            <label for="{{ field.id_for_label }}" class="mb-2 font-medium text-white">{{ field.label }}</label>
+            <input 
+              type="{{ field.field.widget.input_type }}" 
+              name="{{ field.name }}" 
+              id="{{ field.id_for_label }}" 
+              class="bg-white/5 text-white rounded-xl px-4 py-3 border border-white/20 focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none transition"
+              value="{{ field.value|default_if_none:'' }}"
+            >
+            {% if field.errors %}
+              <p class="text-red-500 text-sm mt-1">{{ field.errors }}</p>
+            {% endif %}
+          </div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="mt-4">
+        <button type="submit" class="bg-indigo-500 hover:bg-indigo-600 text-white font-semibold px-6 py-3 rounded-xl flex items-center gap-2 transition">
+          <i class="fas fa-upload"></i> Upload Resume
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

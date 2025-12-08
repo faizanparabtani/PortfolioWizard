@@ -20,7 +20,7 @@ generation_status = {}
 
 
 def landing(request):
-    return render(request, 'generator/landing.html')
+    return render(request, 'theme/landing.html')
 
 @login_required
 def dashboard(request):
@@ -38,7 +38,7 @@ def dashboard(request):
         'recent_portfolios': recent_portfolios,
         'templates': templates,
     }
-    return render(request, 'generator/dashboard.html', context)
+    return render(request, 'theme/dashboard.html', context)
 
 # Resume Upload
 @login_required
@@ -54,7 +54,7 @@ def upload_resume(request):
     else:
         form = ResumeUploadForm()
     
-    return render(request, 'generator/upload_resume.html', {'form': form})
+    return render(request, 'theme/upload_resume.html', {'form': form})
 
 # Resume Delete
 @login_required
@@ -82,7 +82,7 @@ def portfolio_templates(request):
         except Resume.DoesNotExist:
             pass
     
-    return render(request, 'generator/portfolio_templates.html', {
+    return render(request, 'theme/portfolio_templates.html', {
         'templates': templates,
         'resumes': resumes,
         'selected_resume': selected_resume
@@ -180,7 +180,7 @@ def view_portfolio(request, portfolio_id):
 @login_required
 def portfolio_list(request):
     portfolios = GeneratedPortfolio.objects.filter(user=request.user)
-    return render(request, 'generator/portfolio_list.html', {'portfolios': portfolios})
+    return render(request, 'theme/portfolio_list.html', {'portfolios': portfolios})
 
 # Portfolio Template Management (Admin Only)
 @staff_member_required

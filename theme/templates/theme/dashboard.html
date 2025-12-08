@@ -1,0 +1,118 @@
+{% extends 'theme/base.html' %}
+
+{% block content %}
+<div class="flex justify-center">
+<h4 class="pt-12 md:pt-18 text-xl mb-4 font-semibold text-gray-900 dark:text-gray-100">Welcome to Your Portfolio Dashboard</h4>
+</div>
+<div class="container mx-auto mt-2 md:mt-6 px-4 grid grid-cols-1 lg:grid-cols-4 gap-6">
+  <!-- Sidebar -->
+  <aside class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-2xl shadow p-4 h-fit">
+    <h5 class="text-lg font-semibold mb-3 text-gray-900 dark:text-gray-100">Portfolio Management</h5>
+    <nav class="flex flex-col space-y-2">
+      <a href="{% url 'generator:upload_resume' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-upload text-yellow-500 mr-2"></i> Upload Resume
+      </a>
+      <a href="{% url 'generator:portfolio_templates' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-paint-brush text-blue-500 mr-2"></i> Portfolio Templates
+      </a>
+      <a href="{% url 'generator:portfolio_list' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-folder text-green-500 mr-2"></i> My Portfolios
+      </a>
+      {% if user.is_staff %}
+      <a href="{% url 'generator:manage_templates' %}" class="flex items-center px-3 py-2 rounded-lg hover:bg-gray-200/50 dark:hover:bg-gray-700 transition">
+        <i class="fas fa-cog text-purple-500 mr-2"></i> Manage Templates
+      </a>
+      {% endif %}
+    </nav>
+  </aside>
+
+  <!-- Main Section -->
+  <section class="lg:col-span-3 space-y-6">
+    <!-- Welcome Card -->
+    <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow p-5">
+      <div class="grid md:grid-cols-2 gap-4">
+        <!-- Quick Actions -->
+        <div class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl shadow p-4">
+          <h5 class="font-semibold mb-3">Quick Actions</h5>
+          <div class="flex flex-col space-y-2">
+            <a href="{% url 'generator:upload_resume' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center">
+              <i class="fas fa-upload mr-2"></i> Upload Resume
+            </a>
+            {% if resumes %}
+            <a href="{% url 'generator:portfolio_templates' %}?resume_id={{ resumes.0.id }}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center">
+              <i class="fas fa-magic mr-2"></i> Generate Portfolio
+            </a>
+            {% else %}
+            <a href="{% url 'generator:upload_resume' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium px-4 py-2 rounded-lg text-sm flex items-center justify-center">
+              <i class="fas fa-upload mr-2"></i> Upload Resume First
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm rounded-xl shadow p-4">
+          <h5 class="font-semibold mb-3">Recent Activity</h5>
+          {% if recent_portfolios %}
+          <div class="space-y-2">
+            {% for portfolio in recent_portfolios %}
+            <a href="{% url 'generator:view_portfolio' portfolio.id %}" class="block px-3 py-2 rounded-lg hover:bg-gray-200/40 dark:hover:bg-gray-700/40 transition">
+              <div class="flex justify-between text-sm font-medium">
+                <span>{{ portfolio.title }}</span>
+                <span class="text-gray-500 text-xs">{{ portfolio.created_at|timesince }} ago</span>
+              </div>
+              <p class="text-xs text-gray-500">{{ portfolio.template.name }} Template</p>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p class="text-gray-500 text-sm">No recent activity</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Resume Section -->
+    <div class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm rounded-2xl shadow p-5">
+      <h5 class="text-lg font-semibold mb-4">Your Resumes</h5>
+      {% if resumes %}
+      <div class="overflow-x-auto">
+        <table class="border-separate min-w-full text-sm text-left text-gray-700 dark:text-gray-300">
+          <thead class="bg-gray-100/70 dark:bg-gray-700/50 text-gray-900 dark:text-gray-100">
+            <tr>
+              <th class="px-4 py-2 font-semibold rounded-tl-xl">Name</th>
+              <th class="px-4 py-2 font-semibold">Uploaded</th>
+              <th class="px-4 py-2 font-semibold rounded-xl">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            {% for resume in resumes %}
+            <tr class="">
+              <td class="px-4 py-2">{{ resume.name }}</td>
+              <td class="px-4 py-2">{{ resume.uploaded_at|date:"F j, Y" }}</td>
+              <td class="px-4 py-2 space-x-2">
+                <a href="{% url 'generator:portfolio_templates' %}?resume_id={{ resume.id }}" class="inline-flex items-center bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1.5 rounded-md">
+                  <i class="fas fa-magic mr-1"></i> Generate
+                </a>
+                <a href="{% url 'generator:delete_resume' resume.id %}" class="inline-flex items-center bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1.5 rounded-md">
+                  <i class="fas fa-trash mr-1"></i> Delete
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <i class="fas fa-file-alt fa-3x text-gray-400 mb-3"></i>
+        <p class="text-gray-500 mb-3">No resumes uploaded yet.</p>
+        <a href="{% url 'generator:upload_resume' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded-lg inline-flex items-center">
+          <i class="fas fa-upload mr-2"></i> Upload Your First Resume
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+</div>
+{% endblock %}
