@@ -1,64 +1,74 @@
-# PortfolioWizard 🧙
+# PortfolioWizard
 
-PortfolioWizard transforms your resume into a sleek personal website in minutes.
+PortfolioWizard is a comprehensive tool designed to transform professional resumes into sleek, deployable personal websites. By leveraging advanced natural language processing and modern web technologies, it streamlines the process of creating a digital portfolio.
 
-## 🔄 Flow
+## Workflow
 
-1. 📝 Upload PDF or DOCX resume  
-2. 🤖 AI polishes content with Google Gemini 1.5 Pro  
-3. ✍️ Live edit your text in the browser  
-4. 🚀 One-click deploy to Netlify
+The application follows a structured four-step process to generate a portfolio:
 
-[Take a look at one such site created and deployed with this project](https://faizanparabtani-site.netlify.app/)
+1.  **Resume Upload**: Users upload their existing resume in PDF or DOCX format.
+2.  **Content Enhancement**: The system utilizes Google's Gemini 1.5 Pro AI model to parse, analyze, and polish the resume content for a web presentation.
+3.  **Live Editing**: Users are presented with a live editor to refine the generated text and verify the content.
+4.  **Deployment**: With a single interaction, the finalized site is deployed to Netlify.
 
-## 🔍 Deeper Dive
+[View a sample portfolio created with PortfolioWizard](https://faizanparabtani-site.netlify.app/)
 
-### 🔧 Techniques
-- Adaptive prompt engineering for Gemini 1.5 Pro  
-- Exponential backoff with jitter for reliable API calls  
-- Levenshtein distance for duplicate detection  
-- HTML parsing & sanitization with BeautifulSoup4  
-- Asynchronous tasks via Celery & Redis  
+## Technical Architecture
 
-### Visuals
-1. Dashboard to manage user uploaded Resumes and generate portfolio
+This project incorporates several advanced engineering techniques to ensure reliability and performance:
+
+*   **Adaptive Prompt Engineering**: Optimizes interactions with the Gemini 1.5 Pro API for consistent results.
+*   **Resilient API Communication**: Implements exponential backoff with jitter to handle API rate limits and network instability.
+*   **Duplicate Detection**: Uses Levenshtein distance algorithms to identify and merge redundant content.
+*   **Robust Parsing**: Employs `BeautifulSoup4` for HTML sanitization and structure management.
+*   **Asynchronous Processing**: (Planned/Implemented) Task queue integration via Celery and Redis for handling long-running generation tasks.
+
+## User Interface
+
+### Dashboard
+The central hub for managing uploaded resumes and initiating the generation process.
 ![Dashboard](https://github.com/user-attachments/assets/b28316ed-1b98-46da-9b79-da930b02f054)
 
-2. Selecting the style of portfolio with preview
+### Template Selection
+Users can select their preferred aesthetic from a collection of templates with real-time previews.
 ![PortfolioSelect](https://github.com/user-attachments/assets/45296951-7d46-401d-8203-05d57277cc14)
 
-3. Final Result
+### Generated Portfolio
+The final deployed output, responsive and professional.
 ![Working Demo](https://github.com/user-attachments/assets/29eeb3ac-6c3c-4659-8cf2-4567358293a9)
-
 ![Working Demo1](https://github.com/user-attachments/assets/f152c063-5041-4c62-9ef8-80c057f3a005)
 
-## 📂 Project Structure
+## Project Structure
 
 ```plaintext
 portfolio_site_generator/
 ├── generator/
 │   ├── services/
-│   │   ├── [resume_parser.py](generator/services/resume_parser.py)
-│   │   └── [content_generator.py](generator/services/content_generator.py)
-│   └── templates/
-├── media/           # Uploaded resumes & assets
-├── portfolio_site_generator/  # Django settings & URLs
-├── users/           # Authentication & profiles
-└── manage.py
+│   │   ├── resume_parser.py        # Logic for extracting text from PDF/DOCX
+│   │   └── content_generator.py    # AI integration for content refinement
+│   └── templates/                  # Django templates for the generator UI
+├── media/                          # Directory for uploaded user assets
+├── portfolio_site_generator/       # Core Django settings and configuration
+├── users/                          # User authentication and profile management
+└── manage.py                       # Django command-line utility
 ```
 
-### 📦 Key Packages
-- **Django** ≥4.2 — Web framework (https://www.djangoproject.com/)  
-- **djangorestframework** — API layer (https://www.django-rest-framework.org/)  
-- **google-generativeai** — Gemini API (https://pypi.org/project/google-generativeai/)  
-- **netlify-python** — Netlify deployment (https://pypi.org/project/netlify-python/)  
-- **python-dotenv** — Env var management (https://pypi.org/project/python-dotenv/)  
-- **PyPDF2** & **pypdfium2** — PDF parsing (https://github.com/py-pdf/pypdfium2)  
-- **pdfminer.six** & **pdfplumber** — Advanced PDF extraction (https://github.com/jsvine/pdfplumber)  
-- **python-docx** — DOCX reading (https://python-docx.readthedocs.io/)  
-- **beautifulsoup4** — HTML parsing (https://www.crummy.com/software/BeautifulSoup/)  
-- **Levenshtein** — Text similarity (https://pypi.org/project/python-Levenshtein/)  
-- **django-storages** & **boto3** — S3 media storage (https://django-storages.readthedocs.io/)  
-- **whitenoise** — Static files serving (https://whitenoise.evans.io/)  
-- **Tailwind CSS** — Styling (https://tailwindcss.com/)   
-- **Roboto** font — Google Fonts (https://fonts.google.com/specimen/Roboto)  
+## Key Dependencies
+
+*   **Django** (≥4.2): The high-level Python web framework.
+*   **Django REST Framework**: For building Web APIs.
+*   **google-generativeai**: Client library for the Gemini API.
+*   **netlify-python**: Interface for Netlify deployments.
+*   **python-dotenv**: Loads environment variables from `.env` files.
+*   **PyPDF2** & **pypdfium2**: Libraries for reading PDF files.
+*   **pdfminer.six** & **pdfplumber**: Advanced tools for PDF data extraction.
+*   **python-docx**: Library for reading Microsoft Word documents.
+*   **beautifulsoup4**: Library for parsing HTML and XML documents.
+*   **Levenshtein**: For computing string similarities.
+*   **django-storages** & **boto3**: For managing file storage on AWS S3 (optional configuration).
+*   **whitenoise**: Simplified static file serving for web apps.
+*   **Tailwind CSS**: Utility-first CSS framework for styling.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
