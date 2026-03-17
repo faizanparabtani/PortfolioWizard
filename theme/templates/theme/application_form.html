@@ -1,0 +1,96 @@
+{% extends 'theme/base.html' %}
+{% block title %}{{ action }} Application — PortfolioWizard{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 py-10">
+
+  <div class="mb-8">
+    <a href="{% url 'generator:application_list' %}"
+       class="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-3 transition">
+      <i class="fas fa-arrow-left"></i> All Applications
+    </a>
+    <h1 class="text-3xl font-bold text-white">{{ action }} Application</h1>
+  </div>
+
+  <form method="post" class="space-y-5">
+    {% csrf_token %}
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Company <span class="text-red-400">*</span></label>
+        <input type="text" name="company" value="{{ form.company.value|default:'' }}"
+               placeholder="Company name"
+               class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Role <span class="text-red-400">*</span></label>
+        <input type="text" name="role" value="{{ form.role.value|default:'' }}"
+               placeholder="Role / job title"
+               class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Status</label>
+        <select name="status" class="w-full bg-gray-900 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+          {% for value, label in form.fields.status.choices %}
+          <option value="{{ value }}" {% if form.status.value == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Date Applied</label>
+        <input type="date" name="applied_at" value="{{ form.applied_at.value|default:'' }}"
+               class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Job URL</label>
+      <input type="url" name="job_url" value="{{ form.job_url.value|default:'' }}"
+             placeholder="https://..."
+             class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+    </div>
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Resume Used</label>
+        <select name="resume_used" class="w-full bg-gray-900 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+          <option value="">— None —</option>
+          {% for r in form.fields.resume_used.queryset %}
+          <option value="{{ r.pk }}" {% if form.resume_used.value|stringformat:'s' == r.pk|stringformat:'s' %}selected{% endif %}>{{ r.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Tailored Resume</label>
+        <select name="tailored_resume" class="w-full bg-gray-900 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+          <option value="">— None —</option>
+          {% for tr in form.fields.tailored_resume.queryset %}
+          <option value="{{ tr.pk }}" {% if form.tailored_resume.value|stringformat:'s' == tr.pk|stringformat:'s' %}selected{% endif %}>{{ tr }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Notes</label>
+      <textarea name="notes" rows="4" placeholder="Interview notes, contacts, deadlines..."
+                class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition resize-none">{{ form.notes.value|default:'' }}</textarea>
+    </div>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit"
+              class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition">
+        {{ action }} Application
+      </button>
+      <a href="{% url 'generator:application_list' %}"
+         class="px-6 py-3 border border-white/20 text-gray-300 rounded-xl text-sm hover:bg-white/5 transition">
+        Cancel
+      </a>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

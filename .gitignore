@@ -76,7 +76,9 @@ venv.bak/
 .AppleDouble
 .LSOverride
 ._*
-
+.dockerignore
+Procfile
+Profile.tailwind
 # Windows
 Thumbs.db
 ehthumbs.db
@@ -92,7 +94,7 @@ $RECYCLE.BIN/
 *.lnk
 
 # Project specific
-# Hugging Face API key and other sensitive data
+logs/
 .env.local
 .env.development
 .env.test

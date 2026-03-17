@@ -1,27 +1,33 @@
-{% extends 'generator/base.html' %}
-
-{% block title %}Delete Resume - Portfolio Generator{% endblock %}
+{% extends 'theme/base.html' %}
+{% block title %}Confirm Delete - PortfolioWizard{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Confirm Delete</h3>
-                </div>
-                <div class="card-body">
-                    <p>Are you sure you want to delete the resume "{{ resume.name }}"?</p>
-                    <form method="post">
-                        {% csrf_token %}
-                        <div class="d-flex justify-content-between">
-                            <a href="{% url 'generator:dashboard' %}" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-danger">Delete</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="min-h-[80vh] flex items-center justify-center px-4">
+  <div class="bg-white/5 backdrop-blur-md border border-white/20 rounded-2xl p-8 max-w-md w-full">
+    <div class="text-center mb-6">
+      <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+        <i class="fas fa-trash text-red-400 text-2xl"></i>
+      </div>
+      <h2 class="text-2xl font-bold text-white">Delete Resume</h2>
+      <p class="text-gray-400 text-sm mt-1">This action cannot be undone</p>
     </div>
+
+    <p class="text-gray-300 text-center mb-8">
+      Are you sure you want to delete
+      <span class="text-white font-semibold">"{{ resume.name }}"</span>?
+    </p>
+
+    <form method="post" class="flex gap-3">
+      {% csrf_token %}
+      <a href="{% url 'generator:dashboard' %}"
+         class="flex-1 py-2.5 text-center border border-white/20 text-gray-200 rounded-xl hover:bg-white/10 transition font-medium">
+        Cancel
+      </a>
+      <button type="submit"
+              class="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-medium transition">
+        Delete
+      </button>
+    </form>
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}

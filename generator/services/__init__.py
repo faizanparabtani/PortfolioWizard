@@ -1,11 +1,11 @@
 from .resume_parser import ResumeParser
 from .content_generator import ContentGenerator
 from .portfolio_generator import PortfolioGenerator
-from .netlify_deployer import NetlifyDeployer
+from .resume_tailor import ResumeTailor
 
 __all__ = [
     'ResumeParser',
     'ContentGenerator',
     'PortfolioGenerator',
-    'NetlifyDeployer'
-] 
+    'ResumeTailor',
+]

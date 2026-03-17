@@ -7,9 +7,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{% block title %}PortfolioWizard - AI Resume Builder{% endblock %}</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <link src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" crossorigin="anonymous"></link>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" crossorigin="anonymous">
   <link rel="icon" href="https://res.cloudinary.com/dklhalalp/image/upload/v1761549795/wizard_zv3vim.png" type="image/png">
   {% tailwind_css %}
+  {% block extra_css %}{% endblock %}
 </head>
 <body class="min-h-screen text-white bg-black font-[Inter]">
   <nav class="fixed w-full z-50 bg-white/10 backdrop-blur-md border-b border-white/10">
@@ -20,10 +21,6 @@
     </a>
     <!-- Desktop Navigation -->
     <ul class="hidden md:flex space-x-8 font-medium">
-      <li><a href="#features" class="hover:text-indigo-400 transition">Features</a></li>
-      <li><a href="#how-it-works" class="hover:text-indigo-400 transition">How It Works</a></li>
-      <li><a href="#privacy" class="hover:text-indigo-400 transition">Privacy</a></li>
-
       {% if user.is_authenticated %}
         <li>
           <form method="post" action="{% url 'logout' %}" class="inline">
@@ -59,6 +56,7 @@
 
 
   <main class="pt-18 md:pt-20">{% block content %}{% endblock %}</main>
+  {% block extra_js %}{% endblock %}
   <footer class="mt-20 py-10 text-center text-gray-400 text-sm bg-white/5 backdrop-blur-md border-t border-white/10">
     © {% now "Y" %} PortfolioWizard. All rights reserved.
   </footer>

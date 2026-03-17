@@ -1,0 +1,124 @@
+{% extends 'theme/base.html' %}
+{% block title %}Tailored Resume — {{ tailored.role_title }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
+
+  <div class="flex flex-col sm:flex-row justify-between items-start gap-4 mb-8">
+    <div>
+      <a href="{% url 'generator:tailored_resume_list' %}"
+         class="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-3 transition">
+        <i class="fas fa-arrow-left"></i> All Tailored Resumes
+      </a>
+      <h1 class="text-3xl font-bold text-white">
+        {% if tailored.role_title %}{{ tailored.role_title }}{% else %}Tailored Resume{% endif %}
+        {% if tailored.company_name %}<span class="text-gray-400 font-normal"> at {{ tailored.company_name }}</span>{% endif %}
+      </h1>
+      <p class="text-gray-400 text-sm mt-1">{{ tailored.created_at|date:"F j, Y" }} &middot; Based on: {{ tailored.resume.name }}</p>
+    </div>
+    <div class="flex gap-2 shrink-0">
+      <a href="{% url 'generator:application_create' %}"
+         class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition">
+        <i class="fas fa-plus"></i> Track Application
+      </a>
+      <form method="post" action="{% url 'generator:delete_tailored_resume' tailored.pk %}">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Delete this tailored resume?')"
+                class="inline-flex items-center gap-2 px-4 py-2 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/20 transition text-sm">
+          <i class="fas fa-trash"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ATS Score + Keywords -->
+  <div class="grid sm:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white/5 border border-white/10 rounded-xl p-5 flex flex-col items-center justify-center">
+      <div class="relative w-24 h-24 mb-2">
+        <svg class="w-24 h-24 -rotate-90" viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#1f2937" stroke-width="3"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="#6366f1" stroke-width="3"
+                  stroke-dasharray="{{ content.ats_score }} {{ 100|add:'-'|add:content.ats_score }}"
+                  stroke-linecap="round"/>
+        </svg>
+        <span class="absolute inset-0 flex items-center justify-center text-2xl font-bold text-white">{{ content.ats_score }}</span>
+      </div>
+      <p class="text-gray-400 text-xs text-center">ATS Match Score</p>
+    </div>
+
+    <div class="sm:col-span-2 grid grid-cols-2 gap-4">
+      <div class="bg-green-500/10 border border-green-500/20 rounded-xl p-4">
+        <p class="text-green-400 font-semibold text-sm mb-2"><i class="fas fa-check-circle mr-1"></i> Keywords Matched</p>
+        <div class="flex flex-wrap gap-1.5">
+          {% for kw in content.keywords_matched %}
+            <span class="bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full">{{ kw }}</span>
+          {% empty %}
+            <span class="text-gray-500 text-xs">None</span>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="bg-red-500/10 border border-red-500/20 rounded-xl p-4">
+        <p class="text-red-400 font-semibold text-sm mb-2"><i class="fas fa-times-circle mr-1"></i> Keywords Missing</p>
+        <div class="flex flex-wrap gap-1.5">
+          {% for kw in content.keywords_missing %}
+            <span class="bg-red-500/20 text-red-300 text-xs px-2 py-0.5 rounded-full">{{ kw }}</span>
+          {% empty %}
+            <span class="text-gray-500 text-xs">None</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Changes made -->
+  {% if content.changes_summary %}
+  <div class="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
+    <h2 class="text-white font-semibold mb-3"><i class="fas fa-list-check text-indigo-400 mr-2"></i>Changes Made</h2>
+    <ul class="space-y-1.5">
+      {% for change in content.changes_summary %}
+        <li class="flex items-start gap-2 text-sm text-gray-300">
+          <i class="fas fa-arrow-right text-indigo-400 mt-0.5 shrink-0"></i> {{ change }}
+        </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <!-- Summary -->
+  <div class="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
+    <h2 class="text-white font-semibold mb-3"><i class="fas fa-user text-indigo-400 mr-2"></i>Tailored Summary</h2>
+    <p class="text-gray-300 text-sm leading-relaxed">{{ content.summary }}</p>
+  </div>
+
+  <!-- Skills -->
+  <div class="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
+    <h2 class="text-white font-semibold mb-3"><i class="fas fa-code text-indigo-400 mr-2"></i>Skills (reordered by relevance)</h2>
+    <div class="flex flex-wrap gap-2">
+      {% for skill in content.skills %}
+        <span class="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-xs px-3 py-1 rounded-full">{{ skill }}</span>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Experience -->
+  <div class="bg-white/5 border border-white/10 rounded-xl p-5 mb-6">
+    <h2 class="text-white font-semibold mb-4"><i class="fas fa-briefcase text-indigo-400 mr-2"></i>Tailored Experience</h2>
+    <div class="space-y-6">
+      {% for exp in content.experience %}
+      <div class="border-l-2 border-indigo-500/40 pl-4">
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-1">
+          <h3 class="text-white font-medium">{{ exp.position }} <span class="text-gray-400 font-normal">at {{ exp.company }}</span></h3>
+          <span class="text-gray-500 text-xs">{{ exp.start_date }} – {{ exp.end_date }}</span>
+        </div>
+        <ul class="list-disc list-inside space-y-1 mt-2">
+          {% for bullet in exp.bullets %}
+            <li class="text-gray-300 text-sm">{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

@@ -1,74 +1,111 @@
 # PortfolioWizard
 
-PortfolioWizard is a comprehensive tool designed to transform professional resumes into sleek, deployable personal websites. By leveraging advanced natural language processing and modern web technologies, it streamlines the process of creating a digital portfolio.
+A full-stack Django application that turns a PDF resume into a live, shareable portfolio website using Claude AI — with a second tool that tailors your resume to any job description and returns an ATS compatibility score.
 
-## Workflow
+**Live demo:** *(deploy and add link here)*
 
-The application follows a structured four-step process to generate a portfolio:
+---
 
-1.  **Resume Upload**: Users upload their existing resume in PDF or DOCX format.
-2.  **Content Enhancement**: The system utilizes Google's Gemini 1.5 Pro AI model to parse, analyze, and polish the resume content for a web presentation.
-3.  **Live Editing**: Users are presented with a live editor to refine the generated text and verify the content.
-4.  **Deployment**: With a single interaction, the finalized site is deployed to Netlify.
+## What it does
 
-[View a sample portfolio created with PortfolioWizard](https://faizanparabtani-site.netlify.app/)
+### 1. AI Portfolio Generator
+Upload a PDF resume. Claude (Anthropic) parses it into structured JSON — skills, experience, projects, about — and populates a professional HTML template. The result is published instantly at a unique public URL (`/p/<uuid>/`) with no external hosting required.
 
-## Technical Architecture
+Guests can drop a PDF on the landing page, pick a template, and register in one flow. On sign-up, PortfolioWizard automatically generates the portfolio and redirects to a live loading screen.
 
-This project incorporates several advanced engineering techniques to ensure reliability and performance:
+### 2. AI Resume Tailor
+Paste a job description alongside your uploaded resume. Claude rewrites your experience bullets to match the role, identifies keywords present and missing, and returns an ATS score out of 100. Each tailored version is saved and labelled by company and role for future reference.
 
-*   **Adaptive Prompt Engineering**: Optimizes interactions with the Gemini 1.5 Pro API for consistent results.
-*   **Resilient API Communication**: Implements exponential backoff with jitter to handle API rate limits and network instability.
-*   **Duplicate Detection**: Uses Levenshtein distance algorithms to identify and merge redundant content.
-*   **Robust Parsing**: Employs `BeautifulSoup4` for HTML sanitization and structure management.
-*   **Asynchronous Processing**: (Planned/Implemented) Task queue integration via Celery and Redis for handling long-running generation tasks.
+### Supporting features
+- **Job Application Tracker** — log applications with status (Applied → Interview → Offer → Rejected), link the resume and tailored version used
+- **Portfolio Analytics** — every visit to a public portfolio is logged (privacy-safe SHA-256 hashed IP); view count and last-viewed date shown on the dashboard
+- **Template management** — staff admin can add/toggle portfolio HTML templates without touching code
 
-## User Interface
+---
 
-### Dashboard
-The central hub for managing uploaded resumes and initiating the generation process.
-![Dashboard](https://github.com/user-attachments/assets/b28316ed-1b98-46da-9b79-da930b02f054)
+## Technical highlights
 
-### Template Selection
-Users can select their preferred aesthetic from a collection of templates with real-time previews.
-![PortfolioSelect](https://github.com/user-attachments/assets/45296951-7d46-401d-8203-05d57277cc14)
+| Concern | Approach |
+|---|---|
+| AI integration | `anthropic` SDK with adaptive thinking, streaming, and `output_config` JSON schema — structured output, no prompt parsing |
+| Guest flow | Landing-page drop zone stores PDF + template choice in session; `_consume_guest_session()` in `users/views.py` auto-generates on first login/register |
+| Data isolation | All user-scoped views use `get_object_or_404(..., user=request.user)` — 404 not 403 |
+| Privacy | IP addresses hashed with SHA-256 before storage, never stored raw |
+| Security | Portfolio HTML served with a strict `Content-Security-Policy`; edit saves sanitised through `bleach` |
+| Testing | 162 pytest tests across models, forms, views, services, and template tags — all passing |
+| Deployment | Docker + Railway/Render with split settings (`base` / `development` / `production`) |
 
-### Generated Portfolio
-The final deployed output, responsive and professional.
-![Working Demo](https://github.com/user-attachments/assets/29eeb3ac-6c3c-4659-8cf2-4567358293a9)
-![Working Demo1](https://github.com/user-attachments/assets/f152c063-5041-4c62-9ef8-80c057f3a005)
+---
 
-## Project Structure
+## Stack
 
-```plaintext
-portfolio_site_generator/
-├── generator/
-│   ├── services/
-│   │   ├── resume_parser.py        # Logic for extracting text from PDF/DOCX
-│   │   └── content_generator.py    # AI integration for content refinement
-│   └── templates/                  # Django templates for the generator UI
-├── media/                          # Directory for uploaded user assets
-├── portfolio_site_generator/       # Core Django settings and configuration
-├── users/                          # User authentication and profile management
-└── manage.py                       # Django command-line utility
+- **Backend:** Django 5.2, Python 3.12
+- **AI:** Claude Opus 4.6 via `anthropic` SDK (adaptive thinking, structured JSON output, streaming)
+- **Database:** PostgreSQL (prod) / SQLite (dev)
+- **Frontend:** Tailwind CSS (dark theme, no JS framework)
+- **Storage:** Local (dev) / configurable for S3
+- **Testing:** pytest-django, unittest.mock
+- **Deployment:** Docker, Railway, Render
+
+---
+
+## Running locally
+
+```bash
+git clone https://github.com/yourname/PortfolioWizard
+cd PortfolioWizard
+
+cp .env.example .env
+# Add your ANTHROPIC_API_KEY to .env
+
+uv sync
+uv run python manage.py migrate
+uv run python manage.py createsuperuser  # optional, for template management
+uv run python manage.py runserver
 ```
 
-## Key Dependencies
+Then visit `http://localhost:8000`. You can drop a PDF resume directly on the landing page — no account needed until you generate.
 
-*   **Django** (≥4.2): The high-level Python web framework.
-*   **Django REST Framework**: For building Web APIs.
-*   **google-generativeai**: Client library for the Gemini API.
-*   **netlify-python**: Interface for Netlify deployments.
-*   **python-dotenv**: Loads environment variables from `.env` files.
-*   **PyPDF2** & **pypdfium2**: Libraries for reading PDF files.
-*   **pdfminer.six** & **pdfplumber**: Advanced tools for PDF data extraction.
-*   **python-docx**: Library for reading Microsoft Word documents.
-*   **beautifulsoup4**: Library for parsing HTML and XML documents.
-*   **Levenshtein**: For computing string similarities.
-*   **django-storages** & **boto3**: For managing file storage on AWS S3 (optional configuration).
-*   **whitenoise**: Simplified static file serving for web apps.
-*   **Tailwind CSS**: Utility-first CSS framework for styling.
+---
+
+## Running tests
+
+```bash
+uv run pytest
+```
+
+162 tests, all passing.
+
+---
+
+## Project structure
+
+```
+generator/
+├── services/
+│   ├── content_generator.py   # Claude AI portfolio generation (structured JSON output)
+│   ├── resume_tailor.py       # Claude AI ATS resume tailoring
+│   ├── resume_parser.py       # PDF text extraction
+│   └── portfolio_generator.py # Orchestrates generation + template population
+├── models.py                  # Resume, PortfolioTemplate, GeneratedPortfolio,
+│                              # TailoredResume, JobApplication, PortfolioView
+├── views.py                   # All feature views (guest flow, portfolios, applications)
+├── forms.py                   # Upload, tailor, application forms
+└── templatetags/
+    └── generator_tags.py      # get_item, is_textarea filters
+
+portfolios/
+├── minimal/index.html         # Light template (Inter, card layout)
+└── modern/index.html          # Dark template (gradient accents, glow effects)
+
+portfolio_site_generator/settings/
+├── base.py                    # Shared settings
+├── development.py             # DEBUG=True, SQLite, load_dotenv
+└── production.py              # Validates secrets, security headers, HTTPS
+```
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT

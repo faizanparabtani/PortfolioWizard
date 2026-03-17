@@ -1,87 +1,122 @@
-{% extends 'generator/base.html' %}
-
-{% block title %}{{ portfolio.title }} - Portfolio Generator{% endblock %}
+{% extends 'theme/base.html' %}
+{% block title %}{{ portfolio.title }} - PortfolioWizard{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1><i class="fas fa-file-alt"></i> {{ portfolio.title }}</h1>
-        <a href="{% url 'generator:portfolio_list' %}" class="btn btn-outline-secondary">
-            <i class="fas fa-arrow-left"></i> Back to Portfolios
-        </a>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+    <div>
+      <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+        <i class="fas fa-file-alt text-indigo-400"></i> {{ portfolio.title }}
+      </h1>
+      <p class="text-gray-400 text-sm mt-1">
+        {{ portfolio.template.name }} &middot; Created {{ portfolio.created_at|date:"F j, Y" }}
+      </p>
     </div>
+    <a href="{% url 'generator:portfolio_list' %}"
+       class="inline-flex items-center gap-2 px-4 py-2 border border-white/20 text-gray-200 rounded-lg hover:bg-white/10 transition text-sm shrink-0">
+      <i class="fas fa-arrow-left"></i> My Portfolios
+    </a>
+  </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Portfolio Details</h5>
-                    <p class="card-text">
-                        <strong>Template:</strong> {{ portfolio.template.name }}<br>
-                        <strong>Created:</strong> {{ portfolio.created_at|date:"F j, Y, g:i a" }}<br>
-                        {% if portfolio.description %}
-                            <strong>Description:</strong> {{ portfolio.description }}
-                        {% endif %}
-                    </p>
-                </div>
-            </div>
-
-            <div class="card mb-4">
-                <div class="card-body">
-                    <h5 class="card-title">Actions</h5>
-                    <div class="d-flex gap-2">
-                        <a href="{% url 'generator:edit_portfolio' portfolio.id %}" class="btn btn-outline-primary">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <a href="{% url 'generator:serve_portfolio' portfolio.id %}" class="btn btn-primary" target="_blank">
-                            <i class="fas fa-external-link-alt"></i> Open in New Tab
-                        </a>
-                        <form method="post" action="{% url 'generator:deploy_portfolio' portfolio.id %}" style="display: inline;">
-                            {% csrf_token %}
-                            <button type="submit" class="btn btn-success">
-                                <i class="fas fa-rocket"></i> Deploy
-                            </button>
-                        </form>
-                        <button class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-                            <i class="fas fa-trash"></i> Delete
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Preview</h5>
-                    <div class="ratio ratio-16x9">
-                        <iframe src="{% url 'generator:serve_portfolio' portfolio.id %}" 
-                                frameborder="0" 
-                                allowfullscreen></iframe>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <!-- Analytics -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+      <p class="text-3xl font-bold text-indigo-400">{{ portfolio.view_count }}</p>
+      <p class="text-gray-400 text-xs mt-1">Total Views</p>
     </div>
+    <div class="bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+      {% if portfolio.last_viewed %}
+        <p class="text-sm font-semibold text-white">{{ portfolio.last_viewed|date:"M j, Y" }}</p>
+        <p class="text-gray-400 text-xs mt-1">Last Viewed</p>
+      {% else %}
+        <p class="text-sm font-semibold text-gray-500">Not yet</p>
+        <p class="text-gray-400 text-xs mt-1">Last Viewed</p>
+      {% endif %}
+    </div>
+    <div class="col-span-2 sm:col-span-1 bg-white/5 border border-white/10 rounded-xl p-4 text-center">
+      <p class="text-sm font-semibold text-white truncate">{{ portfolio.template.name }}</p>
+      <p class="text-gray-400 text-xs mt-1">Template</p>
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div class="flex flex-wrap gap-3 mb-8">
+    <a href="{% url 'generator:edit_portfolio' portfolio.id %}"
+       class="inline-flex items-center gap-2 px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-sm font-medium transition">
+      <i class="fas fa-edit"></i> Edit
+    </a>
+    <a href="{% url 'generator:serve_portfolio' portfolio.id %}" target="_blank"
+       class="inline-flex items-center gap-2 px-4 py-2 border border-white/20 text-gray-200 rounded-lg hover:bg-white/10 transition text-sm">
+      <i class="fas fa-external-link-alt"></i> Open Full Page
+    </a>
+    <button onclick="toggleShare()"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-indigo-400 text-indigo-300 rounded-lg hover:bg-indigo-500/20 transition text-sm">
+      <i class="fas fa-share-alt"></i> Share
+    </button>
+    <button onclick="document.getElementById('deleteModal').classList.remove('hidden')"
+            class="inline-flex items-center gap-2 px-4 py-2 border border-red-500 text-red-400 rounded-lg hover:bg-red-500/20 transition text-sm ml-auto">
+      <i class="fas fa-trash"></i> Delete
+    </button>
+  </div>
+
+  <!-- Share panel -->
+  <div id="sharePanel" class="hidden mb-6 bg-white/5 border border-indigo-500/40 rounded-xl p-4">
+    <p class="text-sm text-gray-300 mb-2 font-medium"><i class="fas fa-link text-indigo-400 mr-1"></i> Public share link</p>
+    <div class="flex gap-2">
+      <input id="shareUrl" type="text" readonly
+             value="{{ request.scheme }}://{{ request.get_host }}{% url 'generator:public_portfolio' portfolio.public_slug %}"
+             class="flex-1 bg-black/40 border border-white/10 text-gray-200 text-sm rounded-lg px-3 py-2 focus:outline-none">
+      <button onclick="copyShare()"
+              class="px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white text-sm rounded-lg transition">
+        <i class="fas fa-copy"></i>
+      </button>
+    </div>
+    <p class="text-gray-500 text-xs mt-2">Anyone with this link can view your portfolio. Views are tracked automatically.</p>
+  </div>
+
+  <!-- Preview -->
+  <div class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+    <div class="px-5 py-3 border-b border-white/10 flex items-center gap-2">
+      <div class="w-3 h-3 rounded-full bg-red-400"></div>
+      <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+      <div class="w-3 h-3 rounded-full bg-green-400"></div>
+      <span class="text-gray-500 text-xs ml-2">Portfolio Preview</span>
+    </div>
+    <div class="aspect-video w-full">
+      <iframe src="{% url 'generator:serve_portfolio' portfolio.id %}"
+              class="w-full h-full border-0" title="Portfolio Preview"></iframe>
+    </div>
+  </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete the portfolio "{{ portfolio.title }}"?</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form method="post" action="{% url 'generator:delete_portfolio' portfolio.id %}" style="display: inline;">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
+<div id="deleteModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 px-4">
+  <div class="bg-gray-900 border border-white/10 p-6 rounded-2xl max-w-md w-full">
+    <h3 class="text-xl font-semibold text-white mb-3">Delete Portfolio</h3>
+    <p class="text-gray-300 mb-6">Are you sure you want to delete <span class="text-white font-medium">"{{ portfolio.title }}"</span>? This cannot be undone.</p>
+    <div class="flex justify-end gap-3">
+      <button onclick="document.getElementById('deleteModal').classList.add('hidden')"
+              class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-200 rounded-lg transition">Cancel</button>
+      <form method="post" action="{% url 'generator:delete_portfolio' portfolio.id %}">
+        {% csrf_token %}
+        <button type="submit" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">Delete</button>
+      </form>
     </div>
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  function toggleShare() { document.getElementById('sharePanel').classList.toggle('hidden'); }
+  function copyShare() {
+    const url = document.getElementById('shareUrl');
+    url.select();
+    navigator.clipboard.writeText(url.value).then(() => {
+      const btn = event.currentTarget;
+      btn.innerHTML = '<i class="fas fa-check"></i>';
+      setTimeout(() => { btn.innerHTML = '<i class="fas fa-copy"></i>'; }, 2000);
+    });
+  }
+</script>
+{% endblock %}

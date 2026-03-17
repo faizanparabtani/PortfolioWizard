@@ -1,88 +1,229 @@
 {% extends 'theme/base.html' %}
-{% block title %}PortfolioWizard - AI Resume Builder{% endblock %}
+{% block title %}PortfolioWizard - AI Portfolio Generator & Resume Tailor{% endblock %}
 {% block content %}
-<section class="text-center py-12 px-6">
-  <h1 class="text-5xl md:text-6xl font-bold mb-6 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Build Your Resume with AI</h1>
-  <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-8">PortfolioWizard helps you generate professional, tailored resumes in seconds using artificial intelligence.</p>
-  <a href="{% url 'users:login' %}" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-full text-white font-semibold transition">Get Started</a>
+
+<!-- Drop Zone Hero -->
+<section class="py-20 px-6 text-center">
+  <span class="inline-block px-4 py-1 bg-indigo-500/20 text-indigo-300 text-sm font-medium rounded-full mb-6 border border-indigo-500/30">Powered by Claude AI</span>
+  <h1 class="text-5xl md:text-6xl font-bold mb-6 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent leading-tight">
+    From Resume to Portfolio<br>in Seconds
+  </h1>
+  <p class="text-lg md:text-xl text-gray-300 max-w-2xl mx-auto mb-10">
+    Drop your PDF resume below. Claude AI reads it and builds a live, shareable portfolio — no sign-up needed to get started.
+  </p>
+
+  <!-- Drop zone form -->
+  <form id="drop-form" method="post" action="{% url 'generator:guest_upload' %}" enctype="multipart/form-data" class="max-w-lg mx-auto">
+    {% csrf_token %}
+    <input type="file" id="resume-file" name="resume" accept=".pdf" class="hidden">
+
+    <div id="drop-zone"
+         class="relative border-2 border-dashed border-white/20 rounded-2xl p-10 cursor-pointer
+                hover:border-indigo-400/60 hover:bg-indigo-500/5 transition-all duration-200"
+         role="button" tabindex="0" aria-label="Upload resume PDF">
+
+      <!-- Idle state -->
+      <div id="drop-idle" class="flex flex-col items-center gap-3">
+        <div class="w-16 h-16 bg-indigo-500/15 rounded-2xl flex items-center justify-center">
+          <i class="fas fa-cloud-upload-alt text-indigo-400 text-3xl"></i>
+        </div>
+        <p class="text-white font-semibold text-lg">Drop your resume PDF here</p>
+        <p class="text-gray-400 text-sm">or <span class="text-indigo-400 underline">click to browse</span></p>
+        <p class="text-gray-600 text-xs">PDF only · max 5 MB</p>
+      </div>
+
+      <!-- Ready state (file selected) -->
+      <div id="drop-ready" class="hidden flex-col items-center gap-4">
+        <div class="w-16 h-16 bg-green-500/15 rounded-2xl flex items-center justify-center">
+          <i class="fas fa-check-circle text-green-400 text-3xl"></i>
+        </div>
+        <p id="file-name" class="text-white font-semibold text-base truncate max-w-xs"></p>
+        <button type="submit"
+                class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-full text-white font-semibold transition flex items-center gap-2">
+          Select Template <i class="fas fa-arrow-right"></i>
+        </button>
+        <button type="button" id="change-file" class="text-gray-500 hover:text-gray-300 text-sm transition">
+          Change file
+        </button>
+      </div>
+    </div>
+  </form>
+
+  {% if messages %}
+  <div class="mt-4 max-w-lg mx-auto">
+    {% for message in messages %}
+    <p class="text-sm {% if message.tags == 'error' %}text-red-400{% else %}text-gray-400{% endif %}">
+      {{ message }}
+    </p>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <p class="text-gray-500 text-sm mt-6">
+    Already have an account?
+    <a href="{% url 'users:login' %}" class="text-indigo-400 hover:text-indigo-300 transition">Sign in</a>
+  </p>
 </section>
 
-<section id="features" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
-  <div class="max-w-6xl mx-auto text-center">
-    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Why Choose PortfolioWizard?</h2>
-    <div class="grid md:grid-cols-3 gap-10">
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-robot text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">AI-Powered</h4>
-        <p class="text-gray-300">Leverage AI to craft the perfect resume customized for your job role.</p>
+<!-- Two Key Features -->
+<section id="features" class="my-8 py-16 px-6">
+  <div class="max-w-6xl mx-auto">
+    <h2 class="text-3xl font-bold text-center mb-12 text-white">Two tools. One workflow.</h2>
+    <div class="grid md:grid-cols-2 gap-8">
+
+      <div class="p-8 bg-white/5 border border-white/10 rounded-2xl hover:border-indigo-500/50 transition">
+        <div class="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center mb-5">
+          <i class="fas fa-globe text-indigo-400 text-xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-3">AI Portfolio Generator</h3>
+        <p class="text-gray-300 mb-5">Upload your PDF resume. Claude AI extracts your experience, skills, and projects — then populates a professional template and publishes it at a unique public URL instantly. No code. No hosting setup.</p>
+        <ul class="space-y-2 text-sm text-gray-400">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> Live public URL you can share with anyone</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> Portfolio view analytics — see who's looking</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> Multiple templates, regenerate anytime</li>
+        </ul>
       </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-file-alt text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">ATS Friendly</h4>
-        <p class="text-gray-300">Every resume generated is optimized for Applicant Tracking Systems.</p>
+
+      <div class="p-8 bg-white/5 border border-white/10 rounded-2xl hover:border-indigo-500/50 transition">
+        <div class="w-12 h-12 bg-indigo-500/20 rounded-xl flex items-center justify-center mb-5">
+          <i class="fas fa-bullseye text-indigo-400 text-xl"></i>
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-3">AI Resume Tailor</h3>
+        <p class="text-gray-300 mb-5">Paste a job description. Claude AI rewrites your resume bullets to match the role, identifies keywords you're missing, and returns an ATS compatibility score — so you know exactly where you stand before you apply.</p>
+        <ul class="space-y-2 text-sm text-gray-400">
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> ATS score out of 100</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> Keywords matched vs. missing</li>
+          <li class="flex items-center gap-2"><i class="fas fa-check text-indigo-400"></i> Tailored per company and role, saved for reference</li>
+        </ul>
       </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-bolt text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">Instant Results</h4>
-        <p class="text-gray-300">Generate and download your resume instantly — no waiting required.</p>
+
+    </div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section id="how-it-works" class="my-8 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
+  <div class="max-w-5xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-12 text-white">How It Works</h2>
+    <div class="grid md:grid-cols-4 gap-6">
+      <div class="p-6 bg-white/5 rounded-2xl">
+        <div class="text-3xl font-bold text-indigo-400 mb-3">1</div>
+        <h4 class="font-semibold text-white mb-2">Drop Your Resume</h4>
+        <p class="text-gray-400 text-sm">Drop your PDF on the upload zone above — nothing to fill in manually.</p>
+      </div>
+      <div class="p-6 bg-white/5 rounded-2xl">
+        <div class="text-3xl font-bold text-indigo-400 mb-3">2</div>
+        <h4 class="font-semibold text-white mb-2">Pick a Template</h4>
+        <p class="text-gray-400 text-sm">Choose a professional template that fits your style.</p>
+      </div>
+      <div class="p-6 bg-white/5 rounded-2xl">
+        <div class="text-3xl font-bold text-indigo-400 mb-3">3</div>
+        <h4 class="font-semibold text-white mb-2">AI Builds It</h4>
+        <p class="text-gray-400 text-sm">Claude reads your resume and populates your portfolio in seconds.</p>
+      </div>
+      <div class="p-6 bg-white/5 rounded-2xl">
+        <div class="text-3xl font-bold text-indigo-400 mb-3">4</div>
+        <h4 class="font-semibold text-white mb-2">Share the Link</h4>
+        <p class="text-gray-400 text-sm">Your portfolio is live at a unique URL — share it anywhere.</p>
       </div>
     </div>
   </div>
 </section>
 
-<section id="how-it-works" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
-  <div class="max-w-6xl mx-auto text-center">
-    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">How It Works</h2>
-    <div class="grid md:grid-cols-4 gap-8">
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <div class="text-3xl font-bold text-indigo-400 mb-4">1</div>
-        <h4 class="text-xl font-semibold mb-2">Enter Details</h4>
-        <p class="text-gray-300">Provide your education, experience, and skills in our easy form.</p>
-      </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <div class="text-3xl font-bold text-indigo-400 mb-4">2</div>
-        <h4 class="text-xl font-semibold mb-2">AI Generation</h4>
-        <p class="text-gray-300">Our AI crafts a personalized, professional resume for you.</p>
-      </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <div class="text-3xl font-bold text-indigo-400 mb-4">3</div>
-        <h4 class="text-xl font-semibold mb-2">Preview & Edit</h4>
-        <p class="text-gray-300">Tweak your resume to perfection with our built-in editor.</p>
-      </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <div class="text-3xl font-bold text-indigo-400 mb-4">4</div>
-        <h4 class="text-xl font-semibold mb-2">Download</h4>
-        <p class="text-gray-300">Download your resume instantly in multiple formats.</p>
-      </div>
+<!-- Tech Stack -->
+<section class="my-8 py-16 px-6">
+  <div class="max-w-4xl mx-auto text-center">
+    <h2 class="text-3xl font-bold mb-4 text-white">Built with</h2>
+    <p class="text-gray-400 mb-10">A full-stack Django application with AI integration, a comprehensive test suite, and containerised for deployment.</p>
+    <div class="flex flex-wrap justify-center gap-3">
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Django 5</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Claude AI</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Python 3.12</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">PostgreSQL</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Tailwind CSS</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">pytest</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Docker</span>
+      <span class="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-gray-300">Railway</span>
     </div>
   </div>
 </section>
 
-<section id="privacy" class="my-12 py-16 px-6 bg-white/5 backdrop-blur-md rounded-2xl">
-  <div class="max-w-6xl mx-auto text-center">
-    <h2 class="text-4xl font-bold mb-12 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Your Data is Secure</h2>
-    <div class="grid md:grid-cols-3 gap-10">
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-shield-alt text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">Secure Storage</h4>
-        <p class="text-gray-300">Your data is encrypted and stored securely.</p>
-      </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-lock text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">Data Protection</h4>
-        <p class="text-gray-300">We never share your information without consent.</p>
-      </div>
-      <div class="p-6 bg-white/10 rounded-2xl hover:bg-white/15 transition backdrop-blur-md">
-        <i class="fas fa-user-shield text-4xl text-indigo-400 mb-4"></i>
-        <h4 class="text-xl font-semibold mb-2">Privacy Control</h4>
-        <p class="text-gray-300">You can delete your data anytime.</p>
-      </div>
-    </div>
-  </div>
-</section>
-<section id="cta" class="my-12 py-16 px-6 text-center bg-white/5 backdrop-blur-md rounded-2xl">
-  <h2 class="text-4xl font-bold mb-6 bg-linear-to-r from-indigo-400 to-blue-300 bg-clip-text text-transparent">Ready to Build Your Resume?</h2>
-  <p class="text-lg text-gray-300 mb-8">Start now and create your professional resume in minutes.</p>
-  <a href="{% url 'users:login' %}" class="px-8 py-3 bg-indigo-500 hover:bg-indigo-600 rounded-full text-white font-semibold transition">Generate My Resume</a>
-</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const dropZone   = document.getElementById('drop-zone');
+  const fileInput  = document.getElementById('resume-file');
+  const dropIdle   = document.getElementById('drop-idle');
+  const dropReady  = document.getElementById('drop-ready');
+  const fileNameEl = document.getElementById('file-name');
+  const changeBtn  = document.getElementById('change-file');
+
+  function showReady(name) {
+    fileNameEl.textContent = name;
+    dropIdle.classList.add('hidden');
+    dropReady.classList.remove('hidden');
+    dropReady.classList.add('flex');
+  }
+
+  function showIdle() {
+    dropIdle.classList.remove('hidden');
+    dropReady.classList.add('hidden');
+    dropReady.classList.remove('flex');
+    fileInput.value = '';
+  }
+
+  // Click anywhere on zone to open file picker
+  dropZone.addEventListener('click', function (e) {
+    if (e.target === changeBtn || changeBtn.contains(e.target)) return;
+    fileInput.click();
+  });
+
+  // Keyboard accessibility
+  dropZone.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); }
+  });
+
+  // File input change
+  fileInput.addEventListener('change', function () {
+    const file = fileInput.files[0];
+    if (file) showReady(file.name);
+  });
+
+  // Change file button
+  changeBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    showIdle();
+  });
+
+  // Drag events
+  dropZone.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    dropZone.classList.add('border-indigo-400', 'bg-indigo-500/10');
+  });
+
+  dropZone.addEventListener('dragleave', function (e) {
+    if (!dropZone.contains(e.relatedTarget)) {
+      dropZone.classList.remove('border-indigo-400', 'bg-indigo-500/10');
+    }
+  });
+
+  dropZone.addEventListener('drop', function (e) {
+    e.preventDefault();
+    dropZone.classList.remove('border-indigo-400', 'bg-indigo-500/10');
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      alert('Please drop a PDF file.');
+      return;
+    }
+    // Assign the dropped file to the input via DataTransfer
+    const dt = new DataTransfer();
+    dt.items.add(file);
+    fileInput.files = dt.files;
+    showReady(file.name);
+  });
+})();
+</script>
 {% endblock %}

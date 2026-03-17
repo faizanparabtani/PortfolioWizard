@@ -1,0 +1,70 @@
+{% extends 'theme/base.html' %}
+{% block title %}Tailor Resume — PortfolioWizard{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
+
+  <div class="mb-8">
+    <a href="{% url 'generator:dashboard' %}"
+       class="inline-flex items-center gap-2 text-gray-400 hover:text-white text-sm mb-4 transition">
+      <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+    <h1 class="text-3xl font-bold text-white flex items-center gap-3">
+      <i class="fas fa-magic text-indigo-400"></i> Tailor Resume with AI
+    </h1>
+    <p class="text-gray-400 mt-2">
+      Paste a job description and Gemini will rewrite your resume bullets, reorder your skills,
+      and give you an ATS match score — without inventing experience you don't have.
+    </p>
+    <div class="mt-3 inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-gray-300">
+      <i class="fas fa-file-alt text-indigo-400"></i>
+      Using: <span class="font-medium text-white ml-1">{{ resume.name }}</span>
+    </div>
+  </div>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+
+    <div class="grid sm:grid-cols-2 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Role Title <span class="text-gray-500">(optional)</span></label>
+        <input type="text" name="role_title" value="{{ form.role_title.value|default:'' }}"
+               placeholder="{{ form.role_title.field.widget.attrs.placeholder }}"
+               class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-300 mb-1">Company <span class="text-gray-500">(optional)</span></label>
+        <input type="text" name="company_name" value="{{ form.company_name.value|default:'' }}"
+               placeholder="{{ form.company_name.field.widget.attrs.placeholder }}"
+               class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-indigo-500 transition">
+      </div>
+    </div>
+
+    <div>
+      <label class="block text-sm font-medium text-gray-300 mb-1">Job Description <span class="text-red-400">*</span></label>
+      {% if form.job_description.errors %}
+        <p class="text-red-400 text-xs mb-1">{{ form.job_description.errors.0 }}</p>
+      {% endif %}
+      <textarea name="job_description" rows="14"
+                placeholder="{{ form.job_description.field.widget.attrs.placeholder }}"
+                class="w-full bg-white/5 border border-white/10 text-white rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-indigo-500 transition resize-none">{{ form.job_description.value|default:'' }}</textarea>
+    </div>
+
+    <button type="submit"
+            class="w-full flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm transition"
+            onclick="this.disabled=true; this.innerHTML='<i class=\'fas fa-spinner fa-spin\'></i> Analysing with AI…'; this.form.submit();">
+      <i class="fas fa-magic"></i> Tailor My Resume
+    </button>
+  </form>
+
+  {% if request.user.tailoredresume_set.exists %}
+  <div class="mt-10 pt-8 border-t border-white/10">
+    <a href="{% url 'generator:tailored_resume_list' %}"
+       class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 text-sm transition">
+      <i class="fas fa-history"></i> View past tailored resumes
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

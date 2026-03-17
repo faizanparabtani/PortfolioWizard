@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: portfoliowizard
+    runtime: python
+    buildCommand: |
+      pip install uv
+      uv sync
+      cd theme/static_src && npm install && npm run build && cd ../..
+      uv run python manage.py collectstatic --noinput
+      uv run python manage.py migrate
+    startCommand: uv run gunicorn portfolio_site_generator.wsgi:application --workers 2 --timeout 120
+    envVars:
+      - key: DJANGO_SETTINGS_MODULE
+        value: "portfolio_site_generator.settings.production"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: portfoliowizard-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false        # set manually in Render dashboard
+
+databases:
+  - name: portfoliowizard-db
+    databaseName: portfoliowizard
+    plan: free

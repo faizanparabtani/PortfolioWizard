@@ -1,40 +1,52 @@
-{% extends 'generator/base.html' %}
-
-{% block title %}Register - Portfolio Generator{% endblock %}
+{% extends 'theme/base.html' %}
+{% block title %}Register - PortfolioWizard{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="text-center">Create an Account</h3>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="form-group mb-3">
-                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="alert alert-danger mt-2">
-                                        {{ field.errors }}
-                                    </div>
-                                {% endif %}
-                                {% if field.help_text %}
-                                    <small class="form-text text-muted">{{ field.help_text }}</small>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <button type="submit" class="btn btn-primary w-100">Register</button>
-                    </form>
-                    <div class="text-center mt-3">
-                        <p>Already have an account? <a href="{% url 'users:login' %}">Login here</a></p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="min-h-screen flex items-start justify-center px-4 sm:px-6 lg:px-8 bg-black">
+  <div class="max-w-md w-full space-y-8 pt-10">
+    <div class="text-center">
+      <i class="fas fa-hat-wizard text-indigo-400 text-4xl mb-3"></i>
+      <h2 class="text-2xl font-extrabold text-white">Create your account</h2>
+      {% if guest_resume_name %}
+      <p class="text-indigo-300 text-sm mt-2 font-medium">
+        <i class="fas fa-file-pdf mr-1"></i> {{ guest_resume_name }} is ready — sign up to generate your portfolio.
+      </p>
+      {% else %}
+      <p class="text-gray-400 text-sm mt-1">Start building your AI-powered portfolio</p>
+      {% endif %}
     </div>
+
+    <form method="post" class="mt-8 space-y-5">
+      {% csrf_token %}
+      {% for field in form %}
+      <div>
+        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-200 mb-1">
+          {{ field.label }}
+        </label>
+        <input type="{{ field.field.widget.input_type }}"
+               name="{{ field.name }}"
+               id="{{ field.id_for_label }}"
+               {% if field.field.required %}required{% endif %}
+               class="appearance-none w-full px-4 py-2 rounded-lg border border-gray-600 bg-gray-800 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+        {% if field.errors %}
+          <p class="text-red-400 text-sm mt-1">{{ field.errors.0 }}</p>
+        {% endif %}
+        {% if field.help_text %}
+          <p class="text-gray-500 text-xs mt-1">{{ field.help_text }}</p>
+        {% endif %}
+      </div>
+      {% endfor %}
+
+      <button type="submit"
+              class="w-full py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-semibold transition">
+        <i class="fas fa-user-plus mr-2"></i>Create Account
+      </button>
+    </form>
+
+    <p class="text-center text-gray-400 text-sm mt-4">
+      Already have an account?
+      <a href="{% url 'users:login' %}" class="text-indigo-400 hover:underline">Login here</a>
+    </p>
+  </div>
 </div>
-{% endblock %} 
+{% endblock %}

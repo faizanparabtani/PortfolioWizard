@@ -1,0 +1,10 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+restartPolicyType = "on_failure"
+
+[deploy.env]
+DJANGO_SETTINGS_MODULE = "portfolio_site_generator.settings.production"
