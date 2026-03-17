@@ -2,8 +2,6 @@
 
 A full-stack Django application that turns a PDF resume into a live, shareable portfolio website using Claude AI — with a second tool that tailors your resume to any job description and returns an ATS compatibility score.
 
-**Live demo:** *(deploy and add link here)*
-
 ---
 
 ## What it does
@@ -45,7 +43,7 @@ Paste a job description alongside your uploaded resume. Claude rewrites your exp
 - **Frontend:** Tailwind CSS (dark theme, no JS framework)
 - **Storage:** Local (dev) / configurable for S3
 - **Testing:** pytest-django, unittest.mock
-- **Deployment:** Docker, Railway, Render
+- **Deployment:** Docker, Railway, AWS
 
 ---
 
@@ -108,4 +106,4 @@ portfolio_site_generator/settings/
 
 ## License
 
-MIT
+[MIT](LICENSE)
